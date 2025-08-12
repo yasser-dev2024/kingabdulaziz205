@@ -3,115 +3,102 @@
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>تفاصيل الإحالة {{ r.reference }}</title>
+  <title>تفاصيل الإحالة</title>
   <style>
-    :root{--brand:#1f3c88;--brand2:#2ebfa5;--txt:#0f172a;--bg:#f8fafc}
+    :root{--txt:#0f172a;--bg:#f8fafc}
     body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Tajawal,Arial;color:var(--txt)}
     .wrap{max-width:1100px;margin:auto;padding:18px 16px}
-    .card{background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:16px;padding:16px;margin-bottom:14px}
-    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
-    .muted{color:#64748b}
-    .btn{appearance:none;border:none;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer}
-    .btn-primary{background:linear-gradient(100deg,var(--brand) 0%, color-mix(in srgb,var(--brand2) 70%, var(--brand) 30%) 100%);color:#fff}
-    select,input,textarea{padding:10px 12px;border:1px solid rgba(0,0,0,.16);border-radius:10px;background:#fff}
+    .card{background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:18px;padding:16px}
+    .row{margin:6px 0}
+    select,input,textarea,button{padding:10px;border:1px solid rgba(0,0,0,.16);border-radius:12px;background:#fff}
     textarea{min-height:110px;resize:vertical}
-    .chip{display:inline-block;padding:6px 10px;border:1px dashed rgba(0,0,0,.18);border-radius:999px;background:#fff;font-size:12px}
-    .msg{border:1px solid rgba(0,0,0,.08);border-radius:12px;padding:10px;margin:8px 0;background:#fdfdfd}
-    .msg .meta{font-size:12px;color:#64748b;margin-bottom:6px}
-    .files a{margin-inline-end:8px}
+    .btn{cursor:pointer}
+    .stack{display:grid;gap:8px}
+    .grid2{display:grid;gap:10px;grid-template-columns:1fr; }
+    @media(min-width:900px){ .grid2{grid-template-columns:1fr 1fr;} }
+    .muted{color:#64748b;font-size:13px}
   </style>
 </head>
 <body>
   {% include 'header.html' %}
   <div class="wrap">
-
-    {% if messages %}
-      <div class="card">
-        {% for m in messages %}<span class="chip">{{ m }}</span>{% endfor %}
-      </div>
-    {% endif %}
-
     <div class="card">
-      <h2 style="margin:0 0 8px 0">تفاصيل الإحالة</h2>
-      <div class="muted">مرجع: {{ r.reference }} • الحالة: {{ r.get_status_display }}</div>
-      <p><strong>الطالب:</strong> {{ r.student_name }} — <strong>الصف:</strong> {{ r.get_grade_display }}</p>
-      <p><strong>النوع:</strong> {{ r.get_referral_type_display }}</p>
-      <p><strong>الوصف:</strong><br>{{ r.details|linebreaksbr }}</p>
-      <p class="muted">المنشئ: {{ r.created_by.username }}{% if r.assignee %} • المكلّف الحالي: {{ r.assignee.username }}{% endif %}</p>
+      <h2>تفاصيل الإحالة</h2>
+
+      <div class="row"><b>الطالب:</b> {{ r.student_name }} — <b>الصف:</b> {{ r.get_grade_display }}</div>
+      <div class="row"><b>النوع:</b> {{ r.get_referral_type_display }}</div>
+      <div class="row"><b>الوصف:</b> {{ r.details }}</div>
+
+      <div class="row">
+        <b>المنشئ:</b>
+        {{ r.created_by.profile.full_name|default:r.created_by.username }}
+        •
+        <b>المكلّف الحالي:</b>
+        {% if r.assignee %}
+          {{ r.assignee.profile.full_name|default:r.assignee.username }}
+        {% else %}
+          —
+        {% endif %}
+      </div>
     </div>
 
-    <div class="card">
-      <h3 style="margin:0 0 10px 0">إجراءات</h3>
+    <div class="grid2" style="margin-top:12px">
+      <div class="card stack">
+        <h3>إجراءات سريعة</h3>
 
-      <form class="row" method="post" action="{% url 'referrals:assign' r.pk %}">
-        {% csrf_token %}
-        <label for="assignee"><strong>تحويل إلى مستخدم:</strong></label>
-        <select id="assignee" name="assignee" required>
-          <option value="">— اختر مستخدمًا —</option>
-          {% for u in assignable %}
-            <option value="{{ u.id }}" {% if r.assignee and r.assignee.id == u.id %}selected{% endif %}>{{ u.username }}</option>
-          {% endfor %}
-        </select>
-        <button class="btn btn-primary" type="submit">تحويل</button>
-      </form>
+        <form action="{% url 'referrals:assign' r.pk %}" method="post" class="stack">
+          {% csrf_token %}
+          <label for="assignee">تحويل إلى مستخدم</label>
+          <select id="assignee" name="assignee" required>
+            {% for u in assignable %}
+              <option value="{{ u.id }}">{{ u.profile.full_name|default:u.username }}</option>
+            {% endfor %}
+          </select>
+          <button class="btn" type="submit">تحويل</button>
+        </form>
 
-      <form class="row" method="post" action="{% url 'referrals:close' r.pk %}" style="margin-top:12px">
-        {% csrf_token %}
-        <button class="btn" type="submit" style="border:1px solid rgba(0,0,0,.2)">إغلاق الإحالة</button>
-      </form>
-      <div class="muted" style="margin-top:6px">لا يمكن الإغلاق قبل إضافة رد/إجراء واحد على الأقل.</div>
+        <form action="{% url 'referrals:close' r.pk %}" method="post">
+          {% csrf_token %}
+          <button class="btn" type="submit">إغلاق الإحالة</button>
+        </form>
+      </div>
+
+      <div class="card stack">
+        <h3>إرسال رد</h3>
+        <form action="{% url 'referrals:reply' r.pk %}" method="post" enctype="multipart/form-data" class="stack">
+          {% csrf_token %}
+          <label for="content">النص</label>
+          <textarea id="content" name="content" placeholder="اكتب ردك هنا…"></textarea>
+
+          <label for="reply_files">مرفقات (اختياري)</label>
+          <input id="reply_files" name="reply_files" type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.doc,.docx">
+          <div class="muted">حتى 5 ملفات وبحجم 10MB للملف الواحد.</div>
+
+          <button class="btn" type="submit">إرسال الرد</button>
+        </form>
+      </div>
     </div>
 
-    {% if r.attachments.all %}
-      <div class="card">
-        <h3 style="margin:0 0 10px 0">المرفقات (عند الإنشاء)</h3>
-        {% for a in r.attachments.all %}
-          <div class="row">
-            <a class="chip" href="{{ a.file.url }}" target="_blank" rel="noopener">تحميل</a>
-            <span class="muted">— {{ a.uploaded_by.username }} • {{ a.uploaded_at|date:"Y-m-d H:i" }}</span>
-          </div>
-        {% endfor %}
-      </div>
-    {% endif %}
-
-    <div class="card">
-      <h3 style="margin:0 0 10px 0">المحادثة</h3>
-      {% for a in actions %}
-        <div class="msg">
-          <div class="meta">{{ a.author.username }} • {{ a.get_kind_display }} • {{ a.created_at|date:"Y-m-d H:i" }}</div>
-          {% if a.content %}<div>{{ a.content|linebreaksbr }}</div>{% endif %}
-          {% if a.files.all %}
-            <div class="files" style="margin-top:6px">
-              {% for f in a.files.all %}
-                <a class="chip" href="{{ f.file.url }}" target="_blank" rel="noopener">ملف</a>
-              {% endfor %}
-            </div>
-          {% endif %}
-        </div>
+    <div class="card" style="margin-top:12px">
+      <h3>المرفقات</h3>
+      {% for f in files %}
+        <div class="row"><a href="{{ f.file.url }}" target="_blank">ملف</a> — {{ f.uploaded_at|date:"Y-m-d H:i" }}</div>
       {% empty %}
-        <div class="muted">لا توجد ردود بعد.</div>
+        <div class="row">لا توجد مرفقات.</div>
       {% endfor %}
     </div>
 
-    <div class="card">
-      <h3 style="margin:0 0 10px 0">إضافة رد</h3>
-      <form method="post" action="{% url 'referrals:reply' r.pk %}" enctype="multipart/form-data">
-        {% csrf_token %}
-        <div class="row" style="flex-direction:column;align-items:stretch">
-          <label for="content"><strong>النص (اختياري إذا وجدت ملفات):</strong></label>
-          <textarea id="content" name="content" placeholder="اكتب ردّك هنا..."></textarea>
+    <div class="card" style="margin-top:12px">
+      <h3>الردود</h3>
+      {% for act in actions %}
+        <div class="row">
+          <b>{{ act.author.profile.full_name|default:act.author.username }}</b> — {{ act.created_at|date:"Y-m-d H:i" }}<br>
+          {{ act.content|default:"(بدون نص)" }}
         </div>
-        <div class="row" style="margin-top:8px;flex-wrap:wrap;align-items:center">
-          <label for="reply_files"><strong>مرفقات:</strong></label>
-          <input id="reply_files" name="reply_files" type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.doc,.docx">
-          <span class="muted">حتى 5 ملفات، 10MB لكل ملف.</span>
-        </div>
-        <div class="row" style="margin-top:10px">
-          <button class="btn btn-primary" type="submit">إرسال الرد</button>
-        </div>
-      </form>
+      {% empty %}
+        <div class="row">لا توجد ردود بعد.</div>
+      {% endfor %}
     </div>
-
   </div>
   {% include 'footer.html' %}
 </body>

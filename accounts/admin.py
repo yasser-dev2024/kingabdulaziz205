@@ -1,14 +1,10 @@
+# C:\Users\Test2\kingabdulaziz205\accounts\admin.py
 from django.contrib import admin
+from django.contrib.auth.models import User
+from .models import Profile
 
-# تخصيص واجهة لوحة الإدارة
-admin.site.site_header = "لوحة إدارة نظام الإحالات"
-admin.site.site_title = "إدارة الإحالات"
-admin.site.index_title = "مرحبًا بك في لوحة الإدارة"
-
-# إذا أضفت نموذج ملف مستخدم لاحقًا (مثال):
-# from .models import UserProfile
-# @admin.register(UserProfile)
-# class UserProfileAdmin(admin.ModelAdmin):
-#     list_display = ("user", "role", "is_active", "created_at")
-#     list_filter = ("role", "is_active")
-#     search_fields = ("user__username", "user__first_name", "user__last_name")
+@admin.register(Profile)
+class ProfileAdmin(admin.ModelAdmin):
+    list_display = ("full_name", "role", "user")
+    search_fields = ("full_name", "user__username")
+    list_filter = ("role",)
