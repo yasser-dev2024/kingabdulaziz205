@@ -1,0 +1,67 @@
+{% load static %}
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>تسجيل الدخول - نظام الإحالات</title>
+  <style>
+    :root{--brand:#1f3c88;--brand2:#2ebfa5;--accent:#ffb703;--txt:#0f172a;--bg:#f8fafc}
+    body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Tajawal,Arial;color:var(--txt)}
+    .wrap{max-width:980px;margin:auto;padding:18px 16px}
+    .card{background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:18px;padding:16px}
+    .title{display:flex;align-items:center;justify-content:space-between;margin:8px 0 14px 0}
+    .title h1{margin:0;font-size:clamp(20px,3.2vw,26px)}
+    form{display:grid;gap:12px;margin-top:10px}
+    .row{display:grid;gap:6px}
+    label{font-weight:700}
+    input{padding:12px 12px;border:1px solid rgba(0,0,0,.16);border-radius:12px;background:#fff}
+    .err{color:#b91c1c;font-size:13px}
+    .btn{appearance:none;border:none;border-radius:14px;padding:12px 16px;font-weight:800;cursor:pointer}
+    .btn-primary{background:linear-gradient(100deg,var(--brand) 0%, color-mix(in srgb,var(--brand2) 70%, var(--brand) 30%) 100%);color:#fff}
+    .msgs{margin:8px 0 0 0}
+    .msg{padding:10px 12px;border-radius:12px;background:#ecfeff;border:1px solid #a5f3fc}
+    .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  </style>
+</head>
+<body>
+
+  {% include 'header.html' %}
+
+  <div class="wrap">
+    <div class="card">
+      <div class="title">
+        <h1>تسجيل الدخول</h1>
+      </div>
+
+      {% if messages %}
+        <div class="msgs">
+          {% for m in messages %}<div class="msg">{{ m }}</div>{% endfor %}
+        </div>
+      {% endif %}
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <div class="row">
+          <label for="id_username">اسم المستخدم</label>
+          <input id="id_username" name="username" autocomplete="username" required>
+        </div>
+        <div class="row">
+          <label for="id_password">كلمة المرور</label>
+          <input id="id_password" name="password" type="password" autocomplete="current-password" required>
+          {% if form.errors %}
+            <div class="err">بيانات الدخول غير صحيحة.</div>
+          {% endif %}
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-primary" type="submit">دخول</button>
+          <a href="{% url 'accounts:register' %}">إنشاء حساب</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  {% include 'footer.html' %}
+</body>
+</html>

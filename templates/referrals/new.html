@@ -1,0 +1,110 @@
+{% load static %}
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>إنشاء إحالة</title>
+  <style>
+    :root{--brand:#1f3c88;--brand2:#2ebfa5;--accent:#ffb703;--txt:#0f172a;--bg:#f8fafc}
+    body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Tajawal,Arial;color:var(--txt)}
+    .wrap{max-width:1100px;margin:auto;padding:18px 16px}
+    .card{background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:18px;padding:16px}
+    .title{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .title h1{margin:0;font-size:clamp(20px,3vw,26px)}
+    form{display:grid;gap:12px}
+    .row{display:grid;gap:6px}
+    label{font-weight:700}
+    input,select,textarea{padding:12px;border:1px solid rgba(0,0,0,.16);border-radius:12px;background:#fff}
+    textarea{min-height:120px;resize:vertical}
+    .err{color:#b91c1c;font-size:13px}
+    .btn{appearance:none;border:none;border-radius:14px;padding:12px 16px;font-weight:800;cursor:pointer}
+    .btn-primary{background:linear-gradient(100deg,var(--brand) 0%, color-mix(in srgb,var(--brand2) 70%, var(--brand) 30%) 100%);color:#fff}
+    .hint{color:#64748b;font-size:13px}
+    .files{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+    .pill{border:1px dashed rgba(0,0,0,.18);padding:6px 10px;border-radius:999px;font-size:12px;background:#fff}
+  </style>
+</head>
+<body>
+  {% include 'header.html' %}
+  <div class="wrap">
+    <div class="card">
+      <div class="title"><h1>إنشاء إحالة</h1></div>
+
+      {% if messages %}
+        {% for m in messages %}
+          <div class="pill" role="status">{{ m }}</div>
+        {% endfor %}
+      {% endif %}
+
+      <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        <div class="row">
+          <label for="student_name">اسم الطالب</label>
+          <input id="student_name" name="student_name" value="{{ form.student_name|default_if_none:'' }}" required>
+          {% if errors.student_name %}<div class="err">{{ errors.student_name }}</div>{% endif %}
+        </div>
+
+        <div class="row">
+          <label for="grade">الصف</label>
+          <select id="grade" name="grade" required>
+            <option value="">— اختر الصف —</option>
+            {% for val,label in grades %}
+              <option value="{{ val }}" {% if form.grade == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+          {% if errors.grade %}<div class="err">{{ errors.grade }}</div>{% endif %}
+        </div>
+
+        <div class="row">
+          <label for="referral_type">نوع الإحالة</label>
+          <select id="referral_type" name="referral_type" required>
+            <option value="">— اختر النوع —</option>
+            {% for val,label in types %}
+              <option value="{{ val }}" {% if form.referral_type == val %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+          </select>
+          {% if errors.referral_type %}<div class="err">{{ errors.referral_type }}</div>{% endif %}
+        </div>
+
+        <div class="row">
+          <label for="details">التفاصيل</label>
+          <textarea id="details" name="details" required>{{ form.details|default_if_none:'' }}</textarea>
+          {% if errors.details %}<div class="err">{{ errors.details }}</div>{% endif %}
+          <div class="hint">رجاءً اكتب وصفًا واضحًا ومختصرًا.</div>
+        </div>
+
+        <div class="row">
+          <label for="attachments">المرفقات (اختياري — حتى 5 ملفات، 10MB لكل ملف)</label>
+          <input id="attachments" name="attachments" type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.doc,.docx">
+          {% if errors.attachments %}<div class="err">{{ errors.attachments }}</div>{% endif %}
+          <div id="list" class="files"></div>
+        </div>
+
+        <div class="row">
+          <button class="btn btn-primary" type="submit">حفظ الإحالة</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  {% include 'footer.html' %}
+
+  <script>
+    // عرض أسماء الملفات المختارة
+    (function(){
+      const input = document.getElementById('attachments');
+      const list = document.getElementById('list');
+      if(input && list){
+        input.addEventListener('change', () => {
+          list.innerHTML = '';
+          [...input.files].slice(0,5).forEach(f => {
+            const el = document.createElement('span');
+            el.className = 'pill';
+            el.textContent = f.name + ' (' + Math.ceil(f.size/1024) + 'KB)';
+            list.appendChild(el);
+          });
+        });
+      }
+    })();
+  </script>
+</body>
+</html>

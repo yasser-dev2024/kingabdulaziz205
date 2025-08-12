@@ -1,0 +1,101 @@
+{% load static %}
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>إنشاء حساب - نظام الإحالات</title>
+  <style>
+    :root{--brand:#1f3c88;--brand2:#2ebfa5;--accent:#ffb703;--txt:#0f172a;--bg:#f8fafc}
+    body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Tajawal,Arial;color:var(--txt)}
+    .wrap{max-width:980px;margin:auto;padding:18px 16px}
+    .card{background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:18px;padding:16px}
+    .title{display:flex;align-items:center;justify-content:space-between;margin:8px 0 14px 0}
+    .title h1{margin:0;font-size:clamp(20px,3.2vw,26px)}
+    .hint{color:#64748b}
+    form{display:grid;gap:12px;margin-top:10px}
+    .row{display:grid;gap:6px}
+    label{font-weight:700}
+    /* نطبّق نفس شكل الحقول على select */
+    input,select{padding:12px 12px;border:1px solid rgba(0,0,0,.16);border-radius:12px;background:#fff}
+    .err{color:#b91c1c;font-size:13px}
+    .btn{appearance:none;border:none;border-radius:14px;padding:12px 16px;font-weight:800;cursor:pointer}
+    .btn-primary{background:linear-gradient(100deg,var(--brand) 0%, color-mix(in srgb,var(--brand2) 70%, var(--brand) 30%) 100%);color:#fff}
+    .actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .note{background:#fff7ed;border:1px dashed #fed7aa;padding:10px 12px;border-radius:12px;color:#92400e}
+    .msgs{margin:8px 0 0 0}
+    .msg{padding:10px 12px;border-radius:12px;background:#ecfeff;border:1px solid #a5f3fc}
+  </style>
+</head>
+<body>
+
+  {% include 'header.html' %}
+
+  <div class="wrap">
+    <div class="card">
+      <div class="title">
+        <h1>إنشاء حساب جديد</h1>
+      </div>
+
+      {% if messages %}
+        <div class="msgs">
+          {% for m in messages %}<div class="msg">{{ m }}</div>{% endfor %}
+        </div>
+      {% endif %}
+
+      <form method="post" novalidate autocomplete="off">
+        {% csrf_token %}
+
+        <div class="row">
+          <label for="username">اسم المستخدم</label>
+          <input id="username" name="username" value="{{ form.username|default_if_none:'' }}" required autocomplete="username">
+          {% if errors.username %}<div class="err">{{ errors.username }}</div>{% endif %}
+        </div>
+
+        <div class="row">
+          <label for="password">كلمة المرور</label>
+          <input id="password" name="password" type="password" required autocomplete="new-password" inputmode="text">
+          {% if errors.password %}<div class="err">{{ errors.password }}</div>{% endif %}
+          <div class="hint">الحد الأدنى 8 أحرف، ويفضّل المزج بين أحرف وأرقام ورموز.</div>
+        </div>
+
+        <div class="row">
+          <label for="password2">تأكيد كلمة المرور</label>
+          <input id="password2" name="password2" type="password" required autocomplete="new-password" inputmode="text">
+          {% if errors.password2 %}<div class="err">{{ errors.password2 }}</div>{% endif %}
+        </div>
+
+        <!-- اختيار نوع المستخدم -->
+        <div class="row">
+          <label for="role">نوع المستخدم</label>
+          <select id="role" name="role" required>
+            <option value="">— اختر الدور —</option>
+            {% for r in roles %}
+              <option value="{{ r }}" {% if form.role == r %}selected{% endif %}>{{ r }}</option>
+            {% endfor %}
+          </select>
+          {% if errors.role %}<div class="err">{{ errors.role }}</div>{% endif %}
+        </div>
+
+        <div class="row">
+          <label for="school_code">رمز المدرسة</label>
+          <input id="school_code" name="school_code" type="password" required autocomplete="off" inputmode="text" placeholder="••••••••">
+          {% if errors.school_code %}<div class="err">{{ errors.school_code }}</div>{% endif %}
+          <div class="hint">اطلب الرمز من إدارة المدرسة.</div>
+        </div>
+
+        <div class="actions">
+          <button class="btn btn-primary" type="submit">إنشاء الحساب</button>
+          <a href="{% url 'accounts:login' %}">لديك حساب؟ تسجيل الدخول</a>
+        </div>
+      </form>
+
+      <div class="note" style="margin-top:12px">
+        بعد التسجيل، ستنتقل لصفحة تسجيل الدخول مباشرة.
+      </div>
+    </div>
+  </div>
+
+  {% include 'footer.html' %}
+</body>
+</html>
