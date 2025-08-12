@@ -2,26 +2,28 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>إحالاتي</title>
   <style>
-    :root{--brand:#1f3c88;--brand2:#2ebfa5;--txt:#0f172a;--bg:#f8fafc}
+    :root{--brand:#1f3c88;--brand2:#2ebfa5;--accent:#ffb703;--txt:#0f172a;--bg:#f8fafc}
     body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Tajawal,Arial;color:var(--txt)}
     .wrap{max-width:1100px;margin:auto;padding:18px 16px}
-    .head{display:flex;align-items:center;justify-content:space-between;margin:6px 0 14px}
+    .head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
     .head h1{margin:0;font-size:clamp(20px,3vw,28px)}
-    .btn{appearance:none;border:none;border-radius:14px;padding:10px 14px;font-weight:800;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:8px}
+    .btn{appearance:none;border:none;border-radius:14px;padding:10px 14px;font-weight:800;cursor:pointer}
     .btn-primary{background:linear-gradient(100deg,var(--brand) 0%, color-mix(in srgb,var(--brand2) 70%, var(--brand) 30%) 100%);color:#fff}
-    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 16px}
-    .tab{padding:8px 12px;border-radius:999px;background:#fff;border:1px solid rgba(0,0,0,.12);text-decoration:none;color:#0f172a}
-    .tab.active{background:linear-gradient(100deg,var(--brand) 0%, color-mix(in srgb,var(--brand2) 70%, var(--brand) 30%) 100%);color:#fff;border:none}
-    .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+    .tabs{display:flex;gap:8px;margin:14px 0 18px 0;flex-wrap:wrap}
+    .tab{padding:8px 12px;border-radius:999px;border:1px solid rgba(0,0,0,.1);text-decoration:none;color:var(--txt);background:#fff}
+    .tab.active{background:color-mix(in srgb, var(--brand) 12%, #fff 88%);border-color:color-mix(in srgb, var(--brand) 35%, #0000)}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
     @media (max-width:900px){.grid{grid-template-columns:1fr}}
-    .card{background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:16px;padding:14px}
-    .muted{color:#64748b}
-    .empty{background:#fff;border:1px dashed rgba(0,0,0,.15);border-radius:18px;padding:22px;text-align:center;color:#475569}
-    .row{display:flex;justify-content:space-between;align-items:center;gap:10px}
-    .pill{display:inline-block;padding:4px 10px;border-radius:999px;background:#eef2ff;color:#1e3a8a;font-size:12px}
+    .card{background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:18px;padding:14px}
+    .row{display:flex;align-items:center;justify-content:space-between;gap:10px}
+    .muted{color:#64748b;font-size:13px;margin-top:2px}
+    .pill{display:inline-flex;gap:6px;align-items:center;padding:6px 10px;border-radius:999px;border:1px dashed rgba(0,0,0,.18);background:#fff;margin-top:6px;font-size:12px}
+    .link{padding:8px 12px;border-radius:12px;border:1px solid #6b21a8;color:#6b21a8;text-decoration:none;font-weight:700;background:#fff}
+    .empty{padding:24px;border:1px dashed rgba(0,0,0,.15);border-radius:16px;background:#fff;text-align:center;color:#64748b}
   </style>
 </head>
 <body>
@@ -30,45 +32,51 @@
   <div class="wrap">
     <div class="head">
       <h1>إحالاتي</h1>
-      <a class="btn btn-primary" href="/referrals/new/">إنشاء إحالة</a>
+      <a class="btn btn-primary" href="{% url 'referrals:new' %}">إنشاء إحالة</a>
     </div>
 
-    <!-- فلاتر العرض -->
+    <!-- فلاتر + أرقام -->
     <div class="tabs" role="tablist" aria-label="تصفية الإحالات">
-      <a class="tab {% if scope == 'all' %}active{% endif %}" href="?scope=all">الكل ({{ counts.all }})</a>
-      <a class="tab {% if scope == 'sent' %}active{% endif %}" href="?scope=sent">مرسلة ({{ counts.sent }})</a>
-      <a class="tab {% if scope == 'inbox' %}active{% endif %}" href="?scope=inbox">واردة ({{ counts.inbox }})</a>
+      <a class="tab {% if scope == 'all' %}active{% endif %}" href="?scope=all">الكل ({{ counts.all|default:0 }})</a>
+      <a class="tab {% if scope == 'sent' %}active{% endif %}" href="?scope=sent">مرسلة ({{ counts.sent|default:0 }})</a>
+      <a class="tab {% if scope == 'inbox' %}active{% endif %}" href="?scope=inbox">واردة ({{ counts.inbox|default:0 }})</a>
     </div>
 
-    <div class="grid">
-      {% for r in items %}
-        <div class="card">
-          <div class="row">
-            <div>
-              <strong>{{ r.student_name }}</strong>
-              <div class="muted">مرجع: {{ r.reference }} • الحالة: {{ r.get_status_display }}</div>
-              <div class="muted">الصف: {{ r.get_grade_display }} • النوع: {{ r.get_referral_type_display }}</div>
-              <div class="muted">
-                <span class="pill">
-                  {% if r.created_by_id == request.user.id %} مرسلة بواسطتك
-                  {% elif r.assignee_id == request.user.id %} واردة إليك
+    {% if items %}
+      <div class="grid">
+        {% for r in items %}
+          <div class="card">
+            <div class="row">
+              <div>
+                <strong>{{ r.student_name }}</strong>
+                <div class="muted">مرجع: {{ r.reference }} • الحالة: {{ r.get_status_display }}</div>
+                <div class="muted">الصف: {{ r.get_grade_display }} • النوع: {{ r.get_referral_type_display }}</div>
+                <div class="muted">
+                  <span class="pill">
+                    {% if r.created_by_id == request.user.id %}
+                      مرسلة بواسطتك
+                    {% elif r.assignee_id == request.user.id %}
+                      واردة إليك
+                    {% endif %}
+                  </span>
+                  <span class="pill">المُنشئ: {{ r.created_by.profile.full_name|default:r.created_by.username }}</span>
+                  {% if r.assignee %}
+                    <span class="pill">المكلّف الحالي: {{ r.assignee.profile.full_name|default:r.assignee.username }}</span>
                   {% endif %}
-                </span>
-                {% if r.assignee %}
-                  <span class="muted"> • المكلّف الحالي: {{ r.assignee.username }}</span>
-                {% endif %}
+                </div>
+              </div>
+              <div>
+                <a class="link" href="{% url 'referrals:detail' r.pk %}">تفاصيل</a>
               </div>
             </div>
-            <a class="btn" style="border:1px solid rgba(0,0,0,.15)" href="{% url 'referrals:detail' r.pk %}">تفاصيل</a>
           </div>
-        </div>
-      {% empty %}
-        <div class="empty">لا توجد إحالات ضمن هذا التصنيف.</div>
-      {% endfor %}
-    </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty">لا توجد إحالات لعرضها حاليًا.</div>
+    {% endif %}
   </div>
 
   {% include 'footer.html' %}
 </body>
 </html>
-
