@@ -6,21 +6,93 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>إحالاتي</title>
   <style>
-    :root{--brand:#1f3c88;--brand2:#2ebfa5;--accent:#ffb703;--txt:#0f172a;--bg:#f8fafc}
-    /* أضفت خاصية cursor فقط لتستخدم صورة static/maus.png */
-    body{
-      margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Tajawal,Arial;color:var(--txt);
-      cursor: url("{% static 'maus.png' %}") 12 12, auto; /* غيّر 12 12 لنقطة الارتكاز إذا لزم */
+    :root{
+      --brand:#1f3c88;--brand2:#2ebfa5;--accent:#ffb703;--txt:#0f172a;--bg:#0b1020;
+      --card:#ffffff;--muted:#64748b;--ring:rgba(31,60,136,.25)
     }
-    /* حتى لا يغيّر المتصفّح المؤشّر في الأزرار والروابط */
+
+    /* خلفية تدرّجات عصرية + مؤشر مخصص */
+    body{
+      margin:0;color:var(--txt);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Tajawal,Arial;
+      background:
+        radial-gradient(1400px 700px at 80% -10%, rgba(46,191,165,.25), transparent 60%),
+        radial-gradient(1200px 600px at 10% 10%, rgba(31,60,136,.25), transparent 70%),
+        radial-gradient(800px 400px at 90% 90%, rgba(255,183,3,.18), transparent 65%),
+        linear-gradient(180deg, #0b132b 0%, #c3c4c8 100%);
+      cursor:url("{% static 'maus.png' %}") 12 12, auto;
+      min-height:100dvh;
+    }
+    /* لا تغيّر المؤشر فوق الروابط/الأزرار */
     a, button, [role="button"], .btn { cursor: inherit; }
 
-    .wrap{max-width:1100px;margin:auto;padding:18px 16px}
-    .head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:6px 0 14px}
-    .head h1{margin:0;font-size:clamp(20px,3vw,28px)}
-    .btn{appearance:none;border:none;border-radius:14px;padding:12px 16px;font-weight:800;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:8px}
-    .btn-primary{background:linear-gradient(100deg,var(--brand) 0%, color-mix(in srgb,var(--brand2) 70%, var(--brand) 30%) 100%);color:#fff}
-    .empty{background:#fff;border:1px dashed rgba(0,0,0,.15);border-radius:18px;padding:22px;text-align:center;color:#475569}
+    /* وهج خفيف يتبع الأقسام بدون تعارض مع الهيدر/الفوتر */
+    body::before{
+      content:"";position:fixed;inset:-10% -10% auto -10%;height:40%;
+      background:radial-gradient(600px 200px at 50% 0%, rgba(46,191,165,.18), transparent 70%);
+      filter:blur(16px);pointer-events:none;z-index:-1;
+    }
+
+    .wrap{max-width:1100px;margin:auto;padding:24px 16px;animation:fadeUp .6s ease both}
+    @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+    /* رأس الصفحة */
+    .head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:8px 0 18px}
+    .head h1{
+      margin:0;font-size:clamp(22px,3.2vw,30px);letter-spacing:.2px;
+      background:linear-gradient(90deg, #e2e8f0 0%, #ffffff 35%, #e2e8f0 100%);
+      -webkit-background-clip:text;background-clip:text;color:transparent;
+      text-shadow:0 1px 0 #ffffff22;
+    }
+
+    /* أزرار */
+    .btn{
+      appearance:none;border:none;border-radius:14px;padding:12px 16px;
+      font-weight:800;text-decoration:none;display:inline-flex;align-items:center;gap:8px;
+      transition:transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+      box-shadow:0 8px 20px -10px #00000080, inset 0 0 0 1px #ffffff22;
+      will-change:transform, box-shadow;
+    }
+    .btn svg{fill:currentColor}
+    .btn-primary{
+      background:linear-gradient(100deg,var(--brand) 0%, color-mix(in srgb,var(--brand2) 70%, var(--brand) 30%) 100%);
+      color:#fff;outline:0;
+    }
+    .btn-primary:hover{transform:translateY(-1px);box-shadow:0 14px 28px -12px #ede2e299, 0 0 0 3px var(--ring)}
+    .btn-primary:active{transform:translateY(0)}
+
+    /* بطاقة الحالة الفارغة (زجاجية) */
+    .empty{
+      position:relative;
+      border-radius:18px;padding:26px;text-align:center;
+      color:#e2e8f0; /* على خلفية داكنة */
+      background:linear-gradient(180deg, rgba(255,255,255,.14), rgba(163, 187, 143, 0.06));
+      border:1px solid rgba(255,255,255,.22);
+      backdrop-filter:blur(10px);
+      box-shadow:
+        0 1px 0 rgba(255,255,255,.25) inset,
+        0 20px 50px -20px rgba(0,0,0,.6);
+    }
+    .empty::after{
+      content:"";
+      position:absolute;inset:-1px;pointer-events:none;border-radius:18px;
+      background:linear-gradient(180deg, rgba(255,255,255,.35), transparent 40%);
+      mask:linear-gradient(#000, transparent 50%);
+    }
+
+    /* شارات صغيرة اختيارية */
+    .chip{
+      display:inline-flex;align-items:center;gap:8px;margin-top:10px;
+      padding:8px 12px;border-radius:999px;border:1px dashed rgba(255,255,255,.25);
+      background:linear-gradient(180deg, rgba(237, 158, 158, 0.12), rgba(233, 208, 208, 0.06));
+      color:#cbd5e1;font-size:13px
+    }
+
+    /* تحسينات وصول وحركة أقل */
+    @media (prefers-reduced-motion: reduce){
+      .btn{transition:none}
+      .wrap{animation:none}
+    }
   </style>
 </head>
 <body>
@@ -28,15 +100,19 @@
 
   <div class="wrap">
     <div class="head">
-      <h1>إحالاتي</h1>
+      <h1>نظام داخلي خاص</h1>
       <a class="btn btn-primary" href="/referrals/new/">
         <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z"/></svg>
         إنشاء إحالة
       </a>
     </div>
 
-    <div class="empty">
+    <div class="empty" role="status" aria-live="polite">
       لا توجد إحالات لعرضها حالياً.
+      <div class="chip" aria-hidden="true">
+        <svg width="14" height="14" viewBox="0 0 24 24"><path d="M12 2a9 9 0 1 1-9 9A9 9 0 0 1 12 2m1 5h-2v6h6v-2h-4z"/></svg>
+        انظم إلينا الآن لأننا نسعى نحو التطور 
+      </div>
     </div>
   </div>
 
