@@ -11,22 +11,20 @@
       --card:#ffffff;--muted:#64748b;--ring:rgba(31,60,136,.25)
     }
 
-    /* خلفية تدرّجات عصرية + مؤشر مخصص */
+    /* خلفية تدرّجات عصرية + المؤشر الأصلي كما هو */
     body{
       margin:0;color:var(--txt);
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Tajawal,Arial;
       background:
         radial-gradient(1400px 700px at 80% -10%, rgba(46,191,165,.25), transparent 60%),
-        radial-gradient(1200px 600px at 10% 10%, rgba(31,60,136,.25), transparent 70%),
+        radial-gradient(1200px 600px at 10% 10%, rgba(188, 200, 233, 0.25), transparent 70%),
         radial-gradient(800px 400px at 90% 90%, rgba(255,183,3,.18), transparent 65%),
-        linear-gradient(180deg, #0b132b 0%, #c3c4c8 100%);
-      cursor:url("{% static 'maus.png' %}") 12 12, auto;
+        linear-gradient(180deg, #404b6a 0%, #c3c4c8 100%);
+      cursor:url("{% static 'maus.png' %}") 12 12, auto; /* لا تغيير */
       min-height:100dvh;
     }
-    /* لا تغيّر المؤشر فوق الروابط/الأزرار */
     a, button, [role="button"], .btn { cursor: inherit; }
 
-    /* وهج خفيف يتبع الأقسام بدون تعارض مع الهيدر/الفوتر */
     body::before{
       content:"";position:fixed;inset:-10% -10% auto -10%;height:40%;
       background:radial-gradient(600px 200px at 50% 0%, rgba(46,191,165,.18), transparent 70%);
@@ -36,7 +34,6 @@
     .wrap{max-width:1100px;margin:auto;padding:24px 16px;animation:fadeUp .6s ease both}
     @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 
-    /* رأس الصفحة */
     .head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:8px 0 18px}
     .head h1{
       margin:0;font-size:clamp(22px,3.2vw,30px);letter-spacing:.2px;
@@ -45,7 +42,6 @@
       text-shadow:0 1px 0 #ffffff22;
     }
 
-    /* أزرار */
     .btn{
       appearance:none;border:none;border-radius:14px;padding:12px 16px;
       font-weight:800;text-decoration:none;display:inline-flex;align-items:center;gap:8px;
@@ -61,26 +57,20 @@
     .btn-primary:hover{transform:translateY(-1px);box-shadow:0 14px 28px -12px #ede2e299, 0 0 0 3px var(--ring)}
     .btn-primary:active{transform:translateY(0)}
 
-    /* بطاقة الحالة الفارغة (زجاجية) */
     .empty{
-      position:relative;
-      border-radius:18px;padding:26px;text-align:center;
-      color:#e2e8f0; /* على خلفية داكنة */
+      position:relative;border-radius:18px;padding:26px;text-align:center;
+      color:#e2e8f0;
       background:linear-gradient(180deg, rgba(255,255,255,.14), rgba(163, 187, 143, 0.06));
       border:1px solid rgba(255,255,255,.22);
       backdrop-filter:blur(10px);
-      box-shadow:
-        0 1px 0 rgba(255,255,255,.25) inset,
-        0 20px 50px -20px rgba(0,0,0,.6);
+      box-shadow:0 1px 0 rgba(255,255,255,.25) inset, 0 20px 50px -20px rgba(0,0,0,.6);
     }
     .empty::after{
-      content:"";
-      position:absolute;inset:-1px;pointer-events:none;border-radius:18px;
+      content:"";position:absolute;inset:-1px;pointer-events:none;border-radius:18px;
       background:linear-gradient(180deg, rgba(255,255,255,.35), transparent 40%);
       mask:linear-gradient(#000, transparent 50%);
     }
 
-    /* شارات صغيرة اختيارية */
     .chip{
       display:inline-flex;align-items:center;gap:8px;margin-top:10px;
       padding:8px 12px;border-radius:999px;border:1px dashed rgba(255,255,255,.25);
@@ -88,7 +78,17 @@
       color:#cbd5e1;font-size:13px
     }
 
-    /* تحسينات وصول وحركة أقل */
+    /* عنصر المتابعة: صورة تتبع حركة الماوس (لا تؤثر على التفاعل) */
+    #mouseFollower{
+      position:fixed;left:0;top:0;z-index:9999;
+      width:24px;height:24px;object-fit:contain;
+      pointer-events:none; /* لا يمنع النقر */
+      filter:drop-shadow(0 1px 2px rgba(0,0,0,.35));
+      transform:translate3d(-100px,-100px,0); /* يبدأ خارج الشاشة */
+    }
+    /* إخفاؤه في الأجهزة اللمسية */
+    @media (pointer:coarse){ #mouseFollower{ display:none; } }
+
     @media (prefers-reduced-motion: reduce){
       .btn{transition:none}
       .wrap{animation:none}
@@ -97,6 +97,9 @@
 </head>
 <body>
   {% include 'header.html' %}
+
+  <!-- صورة تتبع الماوس -->
+  <img id="mouseFollower" src="{% static 'maus.png' %}" alt="">
 
   <div class="wrap">
     <div class="head">
@@ -111,11 +114,41 @@
       لا توجد إحالات لعرضها حالياً.
       <div class="chip" aria-hidden="true">
         <svg width="14" height="14" viewBox="0 0 24 24"><path d="M12 2a9 9 0 1 1-9 9A9 9 0 0 1 12 2m1 5h-2v6h6v-2h-4z"/></svg>
-        انظم إلينا الآن لأننا نسعى نحو التطور 
+        انظم إلينا الآن لأننا نسعى نحو التطور
       </div>
     </div>
   </div>
 
   {% include 'footer.html' %}
+
+  <!-- سكربت خفيف لتحريك الصورة مع الماوس بتحديث مدمج مع requestAnimationFrame -->
+  <script>
+    (function () {
+      const el = document.getElementById('mouseFollower');
+      if (!el) return;
+
+      let mx = -100, my = -100;   // موقع الماوس
+      let fx = -100, fy = -100;   // موقع العنصر (مُنعّم)
+      let raf = null;
+
+      function onMove(e) {
+        mx = e.clientX;
+        my = e.clientY;
+        if (!raf) raf = requestAnimationFrame(tick);
+      }
+
+      function tick() {
+        // تخفيف الحركة (lerp)
+        fx += (mx - fx) * 0.2;
+        fy += (my - fy) * 0.2;
+
+        // طرح نصف الحجم ليكون مركز الصورة عند المؤشر
+        el.style.transform = 'translate3d(' + (fx - 12) + 'px,' + (fy - 12) + 'px,0)';
+        raf = requestAnimationFrame(tick);
+      }
+
+      window.addEventListener('mousemove', onMove, { passive: true });
+    })();
+  </script>
 </body>
 </html>
