@@ -5,132 +5,29 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>إحالاتي</title>
-
   <style>
-    :root{
-      --brand:#1f3c88;--brand2:#2ebfa5;--accent:#ffb703;--txt:#0f172a;--bg:#0b1020;
-      --card:#ffffff;--muted:#64748b;--ring:rgba(31,60,136,.25)
-    }
-
-    /* خلفية عصرية + مؤشر الفأرة من static/maus.png */
+    :root{--brand:#1f3c88;--brand2:#2ebfa5;--accent:#ffb703;--txt:#0f172a;--bg:#0b132b}
     body{
-      margin:0;color:var(--txt);
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Tajawal,Arial;
-      background:
-        radial-gradient(1400px 700px at 80% -10%, rgba(46,191,165,.25), transparent 60%),
-        radial-gradient(1200px 600px at 10% 10%, rgba(31,60,136,.25), transparent 70%),
-        radial-gradient(800px 400px at 90% 90%, rgba(255,183,3,.18), transparent 65%),
-        linear-gradient(180deg, #0b132b 0%, #c3c4c8 100%);
-      cursor:url("{% static 'maus.png' %}") 12 12, auto;
-      min-height:100dvh;
-      display:block;
+      margin:0;background:var(--bg);color:#e5e7eb;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Tajawal,Arial
     }
-    /* لا تغيّر المؤشر فوق الروابط/الأزرار */
-    a, button, [role="button"], .btn { cursor: inherit; }
+    .wrap{max-width:1100px;margin:auto;padding:22px 16px}
+    .head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:6px 0 14px}
+    .head h1{margin:0;font-size:clamp(20px,3vw,28px);color:#fff}
+    .btn{appearance:none;border:none;border-radius:14px;padding:12px 16px;font-weight:800;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:8px}
+    .btn-primary{background:linear-gradient(100deg,var(--brand) 0%, color-mix(in srgb,var(--brand2) 70%, var(--brand) 30%) 100%);color:#fff}
 
-    /* وهج خفيف أعلى الخلفية */
-    body::before{
-      content:"";position:fixed;inset:-10% -10% auto -10%;height:40%;
-      background:radial-gradient(600px 200px at 50% 0%, rgba(46,191,165,.18), transparent 70%);
-      filter:blur(16px);pointer-events:none;z-index:-1;
-    }
+    .tabs{display:flex;gap:8px;margin:10px 0 16px;flex-wrap:wrap}
+    .tab{padding:8px 12px;border-radius:999px;text-decoration:none;color:#e2e8f0;border:1px solid rgba(255,255,255,.18)}
+    .tab.active{background:#fff;color:#0b1020;border-color:#fff}
 
-    .wrap{max-width:1100px;margin:auto;padding:24px 16px;animation:fadeUp .6s ease both}
-    @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-
-    /* رأس الصفحة */
-    .head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:8px 0 18px}
-    .head h1{
-      margin:0;font-size:clamp(22px,3.2vw,30px);letter-spacing:.2px;
-      background:linear-gradient(90deg, #e2e8f0 0%, #ffffff 35%, #e2e8f0 100%);
-      -webkit-background-clip:text;background-clip:text;color:transparent;
-      text-shadow:0 1px 0 #ffffff22;
-    }
-
-    /* أزرار */
-    .btn{
-      appearance:none;border:none;border-radius:14px;padding:12px 16px;
-      font-weight:800;text-decoration:none;display:inline-flex;align-items:center;gap:8px;
-      transition:transform .15s ease, box-shadow .15s ease, opacity .15s ease;
-      box-shadow:0 8px 20px -10px #00000080, inset 0 0 0 1px #ffffff22;
-      will-change:transform, box-shadow;
-    }
-    .btn svg{fill:currentColor}
-    .btn-primary{
-      background:linear-gradient(100deg,var(--brand) 0%, color-mix(in srgb,var(--brand2) 70%, var(--brand) 30%) 100%);
-      color:#fff;outline:0;
-    }
-    .btn-primary:hover{transform:translateY(-1px);box-shadow:0 14px 28px -12px #ede2e299, 0 0 0 3px var(--ring)}
-    .btn-primary:active{transform:translateY(0)}
-
-    /* البطاقة الزجاجية */
-    .empty{
-      position:relative;
-      border-radius:18px;padding:26px;text-align:center;
-      color:#e2e8f0;
-      background:linear-gradient(180deg, rgba(255,255,255,.14), rgba(163, 187, 143, 0.06));
-      border:1px solid rgba(255,255,255,.22);
-      backdrop-filter:blur(10px);
-      box-shadow:
-        0 1px 0 rgba(255,255,255,.25) inset,
-        0 20px 50px -20px rgba(0,0,0,.6);
-    }
-    .empty::after{
-      content:"";
-      position:absolute;inset:-1px;pointer-events:none;border-radius:18px;
-      background:linear-gradient(180deg, rgba(255,255,255,.35), transparent 40%);
-      mask:linear-gradient(#000, transparent 50%);
-    }
-
-    /* عنوان داخلي كبير داخل البطاقة */
-    .inner-title{
-      margin-bottom:10px;
-      font-weight:900;
-      font-size:clamp(18px,2.4vw,22px);
-      line-height:1.4;
-      background:linear-gradient(90deg, #ffffff, #dbeafe 45%, #ffffff 100%);
-      -webkit-background-clip:text;background-clip:text;color:transparent;
-    }
-
-    /* شارة صغيرة اختيارية */
-    .chip{
-      display:inline-flex;align-items:center;gap:8px;margin-top:10px;
-      padding:8px 12px;border-radius:999px;border:1px dashed rgba(255,255,255,.25);
-      background:linear-gradient(180deg, rgba(237, 158, 158, 0.12), rgba(233, 208, 208, 0.06));
-      color:#cbd5e1;font-size:13px
-    }
-    .chip svg{fill:currentColor}
-
-    /* ==== تحسين الاستجابة للموبايل (بدون تغيير الهيكل) ==== */
-    .wrap{max-width:min(1100px,100%); padding-inline:16px}
-    @media (max-width: 1024px){
-      .wrap{padding-inline:14px}
-      .head{gap:10px}
-    }
-    @media (max-width: 768px){
-      body{
-        min-height:100svh;
-        background:
-          radial-gradient(80vw 40vh at 80% -10%, rgba(46,191,165,.25), transparent 60%),
-          radial-gradient(90vw 45vh at 10% 10%, rgba(31,60,136,.25), transparent 70%),
-          radial-gradient(70vw 35vh at 90% 90%, rgba(255,183,3,.18), transparent 65%),
-          linear-gradient(180deg, #0b132b 0%, #c3c4c8 100%);
-      }
-      .wrap{padding:14px 12px}
-      .head{flex-wrap:wrap}
-      .head h1{font-size:clamp(18px,5.5vw,22px)}
-      .btn{padding:10px 12px;border-radius:12px;font-size:14px;gap:8px}
-      .btn svg{width:16px;height:16px}
-      .empty{padding:16px;border-radius:14px;box-shadow:0 14px 28px -18px rgba(0,0,0,.5), 0 0 0 1px #ffffff1f inset}
-      .chip{font-size:12px;padding:6px 10px}
-      .inner-title{font-size:clamp(16px,4.6vw,20px)}
-    }
-    @media (max-width: 400px){
-      .wrap{padding:12px 10px}
-      .btn{font-size:13px; gap:6px; padding:9px 10px}
-      .btn svg{width:14px;height:14px}
-      .empty{font-size:14px}
-    }
+    .grid{display:grid;gap:12px}
+    @media(min-width:700px){.grid{grid-template-columns:1fr 1fr}}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.06));border:1px solid rgba(255,255,255,.22);backdrop-filter:blur(10px);border-radius:16px;padding:14px;color:#f8fafc}
+    .row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+    .muted{color:#cbd5e1;font-size:13px}
+    .pill{display:inline-flex;align-items:center;gap:6px;padding:4px 8px;border-radius:999px;border:1px dashed rgba(255,255,255,.35);font-size:12px;color:#e2e8f0}
+    .empty{background:linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.05));border:1px dashed rgba(255,255,255,.25);border-radius:16px;padding:22px;text-align:center;color:#cbd5e1}
   </style>
 </head>
 <body>
@@ -140,18 +37,50 @@
     <div class="head">
       <h1>إحالاتي</h1>
       <a class="btn btn-primary" href="/referrals/new/">
-        <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z"/></svg>
+        <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z"/></svg>
         إنشاء إحالة
       </a>
     </div>
 
-    <div class="empty" role="status" aria-live="polite">
-      <div class="inner-title">النظام الداخلي لمدرسة الملك عبدالعزيز الابتدائية بأبها</div>
-      لا توجد إحالات لعرضها حالياً.
-      <div class="chip" aria-hidden="true">
-        <svg width="14" height="14" viewBox="0 0 24 24"><path d="M12 2a9 9 0 1 1-9 9A9 9 0 0 1 12 2m1 5h-2v6h6v-2h-4z"/></svg>
-        انضم إلينا الآن — نسعى نحو التطوّر
-      </div>
+    <!-- تبويبات العرض -->
+    <div class="tabs" role="tablist" aria-label="تصفية الإحالات">
+      <a class="tab {% if scope == 'all' %}active{% endif %}" href="?scope=all">الكل ({{ counts.all }})</a>
+      <a class="tab {% if scope == 'sent' %}active{% endif %}" href="?scope=sent">مرسلة ({{ counts.sent }})</a>
+      <a class="tab {% if scope == 'inbox' %}active{% endif %}" href="?scope=inbox">واردة ({{ counts.inbox }})</a>
+    </div>
+
+    <div class="grid">
+      {% for r in items %}
+        <div class="card">
+          <div class="row">
+            <div>
+              <strong style="font-size:16px">{{ r.student_name }}</strong>
+              <div class="muted">مرجع: {{ r.reference }} • الحالة: {{ r.get_status_display }}</div>
+              <div class="muted">الصف: {{ r.get_grade_display }} • النوع: {{ r.get_referral_type_display }}</div>
+              <div class="muted" style="margin-top:6px">
+                {% if r.created_by_id == request.user.id and r.assignee_id != request.user.id %}
+                  <span class="pill">مرسلة</span>
+                {% endif %}
+                {% if r.assignee_id == request.user.id %}
+                  <span class="pill">واردة</span>
+                {% endif %}
+                {% if r.created_by_id == request.user.id and r.assignee_id == request.user.id %}
+                  <span class="pill">مرسلة إلى نفسك</span>
+                {% endif %}
+                <span class="pill">المرسل: {{ r.created_by.username }}</span>
+                {% if r.assignee %}<span class="pill">المكلّف: {{ r.assignee.username }}</span>{% endif %}
+              </div>
+            </div>
+            <div>
+              <a class="btn" style="border:1px solid rgba(255,255,255,.25);color:#fff;text-decoration:none;border-radius:12px;padding:8px 12px" href="{% url 'referrals:detail' r.pk %}">
+                تفاصيل
+              </a>
+            </div>
+          </div>
+        </div>
+      {% empty %}
+        <div class="empty">لا توجد إحالات لعرضها حالياً.</div>
+      {% endfor %}
     </div>
   </div>
 

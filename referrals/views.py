@@ -1,23 +1,20 @@
+# referrals/views.py
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.auth.models import User
-from django.db.models import Q
-from django.http import HttpResponseForbidden
 from django.shortcuts import render, redirect, get_object_or_404
 from django.views.decorators.http import require_http_methods
 from django.utils.translation import gettext as _
+from django.http import HttpResponseForbidden
 
 from .models import Referral, Attachment, Action, ActionAttachment
 
-# إعدادات المرفقات
+# إعدادات رفع الملفات
 ALLOWED_EXTS = {".pdf", ".png", ".jpg", ".jpeg", ".doc", ".docx"}
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10MB
 MAX_FILES = 5
 
 
-# -----------------------------
-# أدوات مساعدة
-# -----------------------------
 def _ctx(form=None, errors=None):
     return {
         "form": form or {},
@@ -35,55 +32,44 @@ def _can_assign(user, ref: Referral):
     return user.is_staff or user == ref.created_by
 
 
-# -----------------------------
-# قائمة الإحالات + العدّادات
-# -----------------------------
+# ========= الصفحة الرئيسية للإحالات مع التبويبات =========
 @login_required
 def list_referrals(request):
-    user = request.user
-    scope = request.GET.get("scope", "all")  # all | sent | inbox
+    """
+    يعرض الإحالات تبعًا للتبويب المطلوب:
+    - all   : الكل (مرسلة + واردة)
+    - sent  : الإحالات التي أنشأتها (مرسلة)
+    - inbox : الإحالات المُحالَة إليك (واردة)
+    ويعرض عدّادات لكل تبويب.
+    """
+    scope = request.GET.get("scope", "all")
 
-    # جميع الإحالات التي تخص هذا المستخدم (مرسلة منه أو واردة إليه)
-    base_qs = (
-        Referral.objects
-        .select_related("created_by__profile", "assignee__profile")
-        .filter(Q(created_by=user) | Q(assignee=user))
-        .order_by("-created_at")
-        .distinct()
-    )
-
-    sent_qs = base_qs.filter(created_by=user)
-    inbox_qs = base_qs.filter(assignee=user)
-    all_qs = base_qs
-
-    counts = {
-        "all": all_qs.count(),
-        "sent": sent_qs.count(),
-        "inbox": inbox_qs.count(),
-    }
+    qs_sent = Referral.objects.filter(created_by=request.user)
+    qs_inbox = Referral.objects.filter(assignee=request.user)
 
     if scope == "sent":
-        items = sent_qs
+        items = qs_sent
     elif scope == "inbox":
-        items = inbox_qs
+        items = qs_inbox
     else:
-        items = all_qs
-        scope = "all"
+        items = (qs_sent | qs_inbox).distinct()
+
+    counts = {
+        "all": (qs_sent | qs_inbox).values("id").distinct().count(),
+        "sent": qs_sent.count(),
+        "inbox": qs_inbox.count(),
+    }
+
+    items = items.select_related("created_by", "assignee").order_by("-created_at")
 
     return render(
         request,
         "referrals/index.html",
-        {
-            "items": items,
-            "counts": counts,
-            "scope": scope,
-        },
+        {"items": items, "counts": counts, "scope": scope},
     )
 
 
-# -----------------------------
-# إنشاء إحالة
-# -----------------------------
+# ========= إنشاء إحالة =========
 @login_required
 @require_http_methods(["GET", "POST"])
 def create_referral(request):
@@ -138,36 +124,23 @@ def create_referral(request):
     return render(request, "referrals/new.html", _ctx())
 
 
-# -----------------------------
-# تفاصيل إحالة
-# -----------------------------
+# ========= تفاصيل إحالة =========
 @login_required
 def detail_referral(request, pk: int):
     ref = get_object_or_404(Referral, pk=pk)
     if not _can_view(request.user, ref):
         return HttpResponseForbidden("لا تملك صلاحية عرض هذه الإحالة.")
-
     assignable = User.objects.filter(is_active=True).exclude(id=request.user.id).order_by("username")
     actions = (
         Action.objects.filter(referral=ref)
-        .select_related("author__profile")
+        .select_related("author")
         .prefetch_related("files")
         .order_by("created_at")
     )
-    return render(
-        request,
-        "referrals/detail.html",
-        {
-            "r": ref,
-            "assignable": assignable,
-            "actions": actions,
-        },
-    )
+    return render(request, "referrals/detail.html", {"r": ref, "assignable": assignable, "actions": actions})
 
 
-# -----------------------------
-# تحويل إحالة
-# -----------------------------
+# ========= تحويل إحالة =========
 @login_required
 @require_http_methods(["POST"])
 def assign_referral(request, pk: int):
@@ -191,9 +164,7 @@ def assign_referral(request, pk: int):
     return redirect("referrals:detail", pk=ref.pk)
 
 
-# -----------------------------
-# رد على إحالة
-# -----------------------------
+# ========= رد على إحالة =========
 @login_required
 @require_http_methods(["POST"])
 def reply_referral(request, pk: int):
@@ -235,9 +206,7 @@ def reply_referral(request, pk: int):
     return redirect("referrals:detail", pk=ref.pk)
 
 
-# -----------------------------
-# إغلاق إحالة
-# -----------------------------
+# ========= إغلاق إحالة =========
 @login_required
 @require_http_methods(["POST"])
 def close_referral(request, pk: int):
