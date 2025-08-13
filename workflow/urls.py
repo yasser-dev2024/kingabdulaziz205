@@ -1,5 +1,8 @@
 from django.urls import path
+from .views import reports_view
+
+app_name = "workflow"
 
 urlpatterns = [
-    # حالياً لا يوجد أي مسار، جاهز للإضافة لاحقاً
+    path('reports/', reports_view, name='reports'),
 ]
