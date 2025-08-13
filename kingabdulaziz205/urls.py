@@ -9,5 +9,6 @@ urlpatterns = [
     path('hlulhv1409/', admin.site.urls),
     path('accounts/', include('accounts.urls')),
     path('referrals/', include('referrals.urls')),
+    path('messages/', include('messaging.urls')),  # ← مسار تطبيق المراسلات
     path('workflow/', include('workflow.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

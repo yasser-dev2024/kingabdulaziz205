@@ -1,0 +1,68 @@
+{% load static %}
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>إنشاء مراسلة</title>
+  <style>
+    :root{--brand:#1f3c88;--brand2:#2ebfa5;--accent:#ffb703;--txt:#0f172a;--bg:#f8fafc}
+    body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Tajawal,Arial;color:var(--txt);
+         cursor:url("{% static 'maus.png' %}") 12 12, auto}
+    a,button,.btn{cursor:inherit}
+    .wrap{max-width:900px;margin:auto;padding:18px 16px}
+    .card{background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:18px;padding:16px}
+    .title{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+    .title h1{margin:0;font-size:clamp(20px,3vw,26px)}
+    form{display:grid;gap:12px}
+    .row{display:grid;gap:6px}
+    label{font-weight:700}
+    input,select,textarea{padding:12px;border:1px solid rgba(0,0,0,.16);border-radius:12px;background:#fff}
+    textarea{min-height:140px;resize:vertical}
+    .err{color:#b91c1c;font-size:13px}
+    .btn{appearance:none;border:none;border-radius:14px;padding:12px 16px;font-weight:800}
+    .btn-primary{background:linear-gradient(100deg,var(--brand) 0%, color-mix(in srgb,var(--brand2) 70%, var(--brand) 30%) 100%);color:#fff}
+  </style>
+</head>
+<body>
+  {% include 'header.html' %}
+  <div class="wrap">
+    <div class="card">
+      <div class="title"><h1>إنشاء مراسلة</h1></div>
+      <form method="post" enctype="multipart/form-data" novalidate>
+        {% csrf_token %}
+        <div class="row">
+          <label for="to">إلى المستخدم</label>
+          <select id="to" name="to" required>
+            <option value="">— اختر المستخدم —</option>
+            {% for u in users %}
+              <option value="{{ u.id }}" {% if form.to == u.id|stringformat:"s" %}selected{% endif %}>{{ u.username }}</option>
+            {% endfor %}
+          </select>
+          {% if errors.to %}<div class="err">{{ errors.to }}</div>{% endif %}
+        </div>
+
+        <div class="row">
+          <label for="subject">الموضوع</label>
+          <input id="subject" name="subject" value="{{ form.subject|default_if_none:'' }}" required>
+          {% if errors.subject %}<div class="err">{{ errors.subject }}</div>{% endif %}
+        </div>
+
+        <div class="row">
+          <label for="content">الرسالة</label>
+          <textarea id="content" name="content">{{ form.content|default_if_none:'' }}</textarea>
+          {% if errors.content %}<div class="err">{{ errors.content }}</div>{% endif %}
+        </div>
+
+        <div class="row">
+          <label for="attachments">المرفقات (اختياري — حتى 5 ملفات، 10MB لكل ملف)</label>
+          <input id="attachments" name="attachments" type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.doc,.docx">
+          {% if errors.attachments %}<div class="err">{{ errors.attachments }}</div>{% endif %}
+        </div>
+
+        <button class="btn btn-primary" type="submit">إرسال</button>
+      </form>
+    </div>
+  </div>
+  {% include 'footer.html' %}
+</body>
+</html>

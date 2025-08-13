@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     'accounts',
     'referrals',
     'workflow',
+    'messaging',  # ⭐ تم تعريف تطبيق المراسلات
 ]
 
 # الوسطاء
@@ -99,17 +100,14 @@ LOCALE_PATHS = [BASE_DIR / 'locale']
 # رابط التقديم
 STATIC_URL = '/static/'
 
-# المجلد الوحيد الذي يتعرّف عليه النظام لملفات static الخاصة بالمشروع:
+# المجلد الوحيد لملفات static الخاصة بالمشروع:
 # C:\Users\Test2\kingabdulaziz205\static
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
 
-# في حالة التجميع للإنتاج (collectstatic) سيُخرِجها هنا (اختياري أثناء التطوير)
+# في حالة التجميع للإنتاج (collectstatic)
 STATIC_ROOT = BASE_DIR / 'static_collected'
-
-# ملاحظة: نبقي إيجاد ملفات التطبيقات (admin وغيرها) كما هو افتراضيًا،
-# حتى لا تتعطل ملفات لوحة تحكم Django.
 
 # ---------------------------------
 # رفع الملفات (Media)
