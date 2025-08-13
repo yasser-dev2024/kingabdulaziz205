@@ -12,7 +12,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # إعدادات أساسية
 SECRET_KEY = 'django-insecure--yj&bf*x+ck1mr&39&jh29=p*qz(g*bf11!wab8ectrmk54&og'
 DEBUG = True
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["127.0.0.1", "localhost"]
 
 # تعريف التطبيقات
 INSTALLED_APPS = [
@@ -93,26 +93,39 @@ LANGUAGES = [
 
 LOCALE_PATHS = [BASE_DIR / 'locale']
 
-# الملفات الثابتة
-STATIC_URL = 'static/'
+# ---------------------------------
+# الملفات الثابتة (Static)
+# ---------------------------------
+# رابط التقديم
+STATIC_URL = '/static/'
+
+# المجلد الوحيد الذي يتعرّف عليه النظام لملفات static الخاصة بالمشروع:
+# C:\Users\Test2\kingabdulaziz205\static
+STATICFILES_DIRS = [
+    BASE_DIR / 'static',
+]
+
+# في حالة التجميع للإنتاج (collectstatic) سيُخرِجها هنا (اختياري أثناء التطوير)
+STATIC_ROOT = BASE_DIR / 'static_collected'
+
+# ملاحظة: نبقي إيجاد ملفات التطبيقات (admin وغيرها) كما هو افتراضيًا،
+# حتى لا تتعطل ملفات لوحة تحكم Django.
+
+# ---------------------------------
+# رفع الملفات (Media)
+# ---------------------------------
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+# ---------------------------------
+# توجيه ما بعد الدخول/الخروج
+# ---------------------------------
+LOGIN_REDIRECT_URL = '/referrals/'   # بعد تسجيل الدخول
+LOGOUT_REDIRECT_URL = '/'            # بعد تسجيل الخروج
+LOGIN_URL = '/accounts/login/'       # مسار صفحة الدخول
 
 # نوع المفتاح الافتراضي
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # كود المدرسة السري للتسجيل
 SCHOOL_SECRET_CODE = '61122_2025'
-
-# ---------------------------------
-# توجيه ما بعد الدخول/الخروج
-# ---------------------------------
-LOGIN_REDIRECT_URL = '/'   # بعد تسجيل الدخول
-LOGOUT_REDIRECT_URL = '/'  # بعد تسجيل الخروج
-LOGIN_URL = '/accounts/login/'  # مسار صفحة الدخول
-
-# توجيه ما بعد الدخول/الخروج
-LOGIN_REDIRECT_URL = '/referrals/'
-LOGOUT_REDIRECT_URL = '/'
-LOGIN_URL = '/accounts/login/'
-
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'

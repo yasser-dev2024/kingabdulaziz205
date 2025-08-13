@@ -7,7 +7,14 @@
   <title>إحالاتي</title>
   <style>
     :root{--brand:#1f3c88;--brand2:#2ebfa5;--accent:#ffb703;--txt:#0f172a;--bg:#f8fafc}
-    body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Tajawal,Arial;color:var(--txt)}
+    /* أضفت خاصية cursor فقط لتستخدم صورة static/maus.png */
+    body{
+      margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Tajawal,Arial;color:var(--txt);
+      cursor: url("{% static 'maus.png' %}") 12 12, auto; /* غيّر 12 12 لنقطة الارتكاز إذا لزم */
+    }
+    /* حتى لا يغيّر المتصفّح المؤشّر في الأزرار والروابط */
+    a, button, [role="button"], .btn { cursor: inherit; }
+
     .wrap{max-width:1100px;margin:auto;padding:18px 16px}
     .head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:6px 0 14px}
     .head h1{margin:0;font-size:clamp(20px,3vw,28px)}
