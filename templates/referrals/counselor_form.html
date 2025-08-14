@@ -1,0 +1,92 @@
+{% load static %}
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>نموذج الموجّه الطلابي</title>
+  <style>
+    :root{--brand:#1f3c88;--brand2:#2ebfa5;--txt:#0f172a;--bg:#f8fafc}
+    body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Tajawal,Arial;color:var(--txt)}
+    .wrap{max-width:1100px;margin:auto;padding:18px 16px}
+    .card{background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:18px;padding:16px}
+    h1{font-size:clamp(20px,3vw,26px);margin:8px 0 12px}
+    form{display:grid;gap:12px}
+    fieldset{border:1px dashed rgba(0,0,0,.15);border-radius:14px;padding:12px}
+    legend{font-weight:800;color:#1f3c88}
+    label{display:block;font-weight:700;margin-bottom:6px}
+    input,select,textarea{width:100%;padding:10px;border:1px solid rgba(0,0,0,.16);border-radius:12px;background:#fff}
+    .row{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+    .btn{appearance:none;border:none;border-radius:14px;padding:12px 16px;font-weight:800;cursor:pointer}
+    .btn-primary{background:linear-gradient(100deg,var(--brand) 0%, color-mix(in srgb,var(--brand2) 70%, var(--brand) 30%) 100%);color:#fff}
+  </style>
+</head>
+<body>
+  {% include 'header.html' %}
+  <div class="wrap">
+    <div class="card">
+      <h1>نموذج الموجّه الطلابي — {{ r.reference }}</h1>
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+
+        <fieldset>
+          <legend>المعلومات الاجتماعية والتعليمية</legend>
+          <div class="row">
+            {{ form.father_alive.label_tag }} {{ form.father_alive }}
+            {{ form.mother_alive.label_tag }} {{ form.mother_alive }}
+            {{ form.parents_status.label_tag }} {{ form.parents_status }}
+            {{ form.siblings_count.label_tag }} {{ form.siblings_count }}
+            {{ form.child_order.label_tag }} {{ form.child_order }}
+            {{ form.father_edu.label_tag }} {{ form.father_edu }}
+            {{ form.mother_edu.label_tag }} {{ form.mother_edu }}
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>المعلومات الاقتصادية</legend>
+          <div class="row">
+            {{ form.father_job.label_tag }} {{ form.father_job }}
+            {{ form.mother_job.label_tag }} {{ form.mother_job }}
+            {{ form.family_income.label_tag }} {{ form.family_income }}
+            {{ form.has_insurance.label_tag }} {{ form.has_insurance }}
+            {{ form.housing_type.label_tag }} {{ form.housing_type }}
+            {{ form.housing_ownership.label_tag }} {{ form.housing_ownership }}
+            {{ form.receives_aid.label_tag }} {{ form.receives_aid }}
+            {{ form.monthly_aid_amount.label_tag }} {{ form.monthly_aid_amount }}
+          </div>
+        </fieldset>
+
+        <fieldset>
+          <legend>المعلومات الصحية</legend>
+          <div class="row">
+            {{ form.health_asthma }} {{ form.health_asthma.label_tag }}
+            {{ form.health_diabetes }} {{ form.health_diabetes.label_tag }}
+            {{ form.health_epilepsy }} {{ form.health_epilepsy.label_tag }}
+            {{ form.health_hearing }} {{ form.health_hearing.label_tag }}
+            {{ form.health_heart }} {{ form.health_heart.label_tag }}
+            {{ form.health_bp }} {{ form.health_bp.label_tag }}
+            {{ form.health_kidney }} {{ form.health_kidney.label_tag }}
+            {{ form.health_sleep }} {{ form.health_sleep.label_tag }}
+            {{ form.health_vision }} {{ form.health_vision.label_tag }}
+          </div>
+          <label>{{ form.health_other.label }} {{ form.health_other }}</label>
+        </fieldset>
+
+        <fieldset>
+            <legend>بيانات عسكرية</legend>
+            <div class="row">
+              {{ form.father_military }} {{ form.father_military.label_tag }}
+              {{ form.at_south_border }} {{ form.at_south_border.label_tag }}
+              {{ form.injured_south }} {{ form.injured_south.label_tag }}
+              {{ form.father_martyr }} {{ form.father_martyr.label_tag }}
+            </div>
+        </fieldset>
+
+        <button class="btn btn-primary" type="submit">حفظ</button>
+      </form>
+    </div>
+  </div>
+  {% include 'footer.html' %}
+</body>
+</html>

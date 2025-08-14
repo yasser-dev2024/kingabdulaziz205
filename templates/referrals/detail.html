@@ -12,11 +12,15 @@
     .row{margin:6px 0}
     select,input,textarea,button{padding:10px;border:1px solid rgba(0,0,0,.16);border-radius:12px;background:#fff}
     textarea{min-height:110px;resize:vertical}
-    .btn{cursor:pointer}
+    .btn{cursor:pointer;display:inline-flex;align-items:center;gap:8px;border:1px solid rgba(0,0,0,.16);border-radius:12px;padding:10px 14px;text-decoration:none}
+    .btn-primary{background:#1f3c88;color:#fff;border-color:#1f3c88}
     .stack{display:grid;gap:8px}
-    .grid2{display:grid;gap:10px;grid-template-columns:1fr; }
+    .grid2{display:grid;gap:10px;grid-template-columns:1fr;}
     @media(min-width:900px){ .grid2{grid-template-columns:1fr 1fr;} }
     .muted{color:#64748b;font-size:13px}
+
+    /* شبكة عرض ملخّص نموذج الموجّه */
+    .grid-intake{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
   </style>
 </head>
 <body>
@@ -42,9 +46,41 @@
       </div>
     </div>
 
+    {# —— ملخّص نموذج الموجّه (يظهر للمكلّف الحالي أو للموجّه/الأدمن) —— #}
+    {% if can_view_intake and intake %}
+      <div class="card" style="margin-top:12px">
+        <div class="row" style="display:flex;align-items:center;justify-content:space-between;">
+          <h3 style="margin:0;">ملخّص نموذج الموجّه</h3>
+          <small class="muted">يظهر هذا الملخّص للمكلّف الحالي بهذه الإحالة</small>
+        </div>
+
+        <div class="grid-intake" style="margin-top:8px;">
+          {% for label, val in intake_display %}
+            <div style="background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:12px;padding:10px;">
+              <div style="font-weight:700;margin-bottom:6px;">{{ label }}</div>
+              <div class="muted">{{ val }}</div>
+            </div>
+          {% endfor %}
+        </div>
+
+        {% if is_counselor %}
+          <div class="row" style="margin-top:10px">
+            <a class="btn" href="{% url 'referrals:counselor' r.pk %}">تعديل بيانات الموجّه</a>
+          </div>
+        {% endif %}
+      </div>
+    {% endif %}
+
     <div class="grid2" style="margin-top:12px">
       <div class="card stack">
         <h3>إجراءات سريعة</h3>
+
+        {# يظهر هذا الزر فقط للموجّه الطلابي #}
+        {% if is_counselor %}
+          <a class="btn btn-primary" href="{% url 'referrals:counselor' r.pk %}">
+            نموذج بيانات الموجّه
+          </a>
+        {% endif %}
 
         <form action="{% url 'referrals:assign' r.pk %}" method="post" class="stack">
           {% csrf_token %}
