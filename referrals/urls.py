@@ -1,20 +1,23 @@
+# referrals/urls.py
 from django.urls import path
-from .views import (
-    list_referrals, create_referral, detail_referral,
-    assign_referral, close_referral, reply_referral,
-    counselor_intake_view,  # إن كان لديك
-    student_file,           # ← جديد
-)
+from . import views
 
 app_name = "referrals"
 
 urlpatterns = [
-    path('', list_referrals, name='index'),
-    path('new/', create_referral, name='new'),
-    path('<int:pk>/', detail_referral, name='detail'),
-    path('<int:pk>/assign/', assign_referral, name='assign'),
-    path('<int:pk>/reply/', reply_referral, name='reply'),
-    path('<int:pk>/close/', close_referral, name='close'),
-    path('<int:pk>/counselor/', counselor_intake_view, name='counselor'),  # إن لم يكن لديك، احذف هذا السطر
-    path('student/<str:key>/', student_file, name='student_file'),          # ← جديد
+    path("", views.list_referrals, name="index"),
+    path("new/", views.create_referral, name="new"),
+    path("<int:pk>/", views.detail_referral, name="detail"),
+    path("<int:pk>/assign/", views.assign_referral, name="assign"),
+    path("<int:pk>/reply/", views.reply_referral, name="reply"),
+    path("<int:pk>/close/", views.close_referral, name="close"),
+
+    # === نموذج بيانات الموجّه ===
+    # الاسم المعتمد:
+    path("<int:pk>/counselor/", views.counselor_intake_view, name="counselor_intake"),
+    # Alias للحفاظ على القوالب القديمة بدون أي تعديل:
+    path("<int:pk>/counselor/", views.counselor_intake_view, name="counselor"),
+
+    # ملف الطالب
+    path("student/<str:key>/", views.student_file, name="student_file"),
 ]
