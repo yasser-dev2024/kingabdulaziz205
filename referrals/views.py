@@ -12,6 +12,7 @@ import unicodedata, re
 
 from accounts.models import Profile
 from .models import Referral, Attachment, Action, ActionAttachment
+from .utils import make_student_key
 
 # ===== تفعيل نموذج الموجّه: من models.py أو counselor_models.py =====
 HAS_COUNSELOR = False
@@ -49,15 +50,6 @@ def _is_counselor(user):
 def _can_assign(user, ref: Referral):
     return (user.is_staff or user == ref.created_by or _is_counselor(user) or (ref.assignee_id == user.id))
 
-def _make_student_key(name: str, civil_id: str | None = None) -> str:
-    key = (civil_id or "").strip()
-    if not key:
-        s = unicodedata.normalize("NFKC", (name or "").strip())
-        s = re.sub(r"\s+", "-", s)
-        s = re.sub(r"[^0-9A-Za-z\u0600-\u06FF\-]", "", s)
-        key = s[:60]
-    return key
-
 def _ensure_student_key(ref: Referral):
     try:
         has_key_field = hasattr(ref, "student_key")
@@ -69,29 +61,111 @@ def _ensure_student_key(ref: Referral):
         if getattr(ref, "student_key", ""):
             return
         civil = (getattr(ref, "student_civil_id", None) or "")[:64]
-        new_key = _make_student_key(getattr(ref, "student_name", ""), civil)
+        new_key = make_student_key(getattr(ref, "student_name", ""), civil)
         if new_key:
             ref.student_key = new_key
             ref.save(update_fields=["student_key"])
     except Exception:
         pass
 
-def _render_counselor_summary(intake) -> str:
+def _display(v):
+    if v is True: return "نعم"
+    if v is False or v == "False": return "لا"
+    return v
+
+def _get_label(obj, field):
+    try:
+        return obj._meta.get_field(field).verbose_name
+    except Exception:
+        return field
+
+def _get_value(obj, field):
+    # يدعم حقول choices عبر get_FOO_display
+    disp = None
+    try:
+        disp = getattr(obj, f"get_{field}_display")()
+        if disp: return disp
+    except Exception:
+        pass
+    return getattr(obj, field, None)
+
+def _mk_pair(obj, field):
+    val = _get_value(obj, field)
+    if val in (None, "", False):  # نتجاهل الفارغ و False
+        return None
+    return (_get_label(obj, field), _display(val))
+
+def _counselor_summary_struct(intake):
+    """يُرجع List من أقسام: كل قسم dict فيه title و items [(label, value)]."""
     if not intake:
-        return ""
-    lines = ["ملخّص بيانات الموجّه الطلابي:"]
-    skip = {"id", "referral", "created_at", "updated_at", "created_by", "updated_by"}
-    for f in intake._meta.fields:
-        if f.name in skip:
-            continue
-        label = getattr(f, "verbose_name", f.name)
-        val = getattr(intake, f.name, None)
-        if val in (None, "", False):
-            continue
-        if isinstance(val, bool):
-            val = "نعم"
-        lines.append(f"- {label}: {val}")
-    return "\n".join(lines)
+        return []
+
+    sec_social = [
+        _mk_pair(intake, "father_alive"),
+        _mk_pair(intake, "mother_alive"),
+        _mk_pair(intake, "parents_status"),
+        _mk_pair(intake, "siblings_count"),
+        _mk_pair(intake, "birth_order"),
+        _mk_pair(intake, "father_education"),
+        _mk_pair(intake, "mother_education"),
+    ]
+
+    sec_economic = [
+        _mk_pair(intake, "father_job"),
+        _mk_pair(intake, "mother_job"),
+        _mk_pair(intake, "family_income"),
+        _mk_pair(intake, "receives_social_support"),
+        _mk_pair(intake, "house_ownership"),
+        _mk_pair(intake, "house_type"),
+        _mk_pair(intake, "house_type_other"),
+        _mk_pair(intake, "gets_everything_easily"),
+    ]
+
+    sec_health_major = [
+        _mk_pair(intake, "disease_heart"),
+        _mk_pair(intake, "disease_pressure"),
+        _mk_pair(intake, "disease_kidney"),
+        _mk_pair(intake, "disease_sleep"),
+        _mk_pair(intake, "disease_vision"),
+        _mk_pair(intake, "disease_other"),
+    ]
+    sec_health_minor = [
+        _mk_pair(intake, "cond_asthma"),
+        _mk_pair(intake, "cond_diabetes"),
+        _mk_pair(intake, "cond_anemia"),
+        _mk_pair(intake, "cond_tonsils"),
+        _mk_pair(intake, "cond_seizures"),
+        _mk_pair(intake, "cond_hearing"),
+        _mk_pair(intake, "cond_allergy"),
+        _mk_pair(intake, "cond_rheumatism"),
+        _mk_pair(intake, "cond_disability"),
+    ]
+
+    sec_military = [
+        _mk_pair(intake, "father_in_military"),
+        _mk_pair(intake, "father_served_southern"),
+        _mk_pair(intake, "father_is_martyr_south"),
+    ]
+
+    sec_notes = [
+        _mk_pair(intake, "student_behavior"),
+        _mk_pair(intake, "previous_interventions"),
+        _mk_pair(intake, "recommendations"),
+        _mk_pair(intake, "follow_up_date"),
+    ]
+
+    def pack(title, items):
+        items = [x for x in items if x]
+        return {"title": title, "items": items} if items else None
+
+    groups = [
+        pack("المعلومات الاجتماعية/التعليمية", sec_social),
+        pack("المعلومات الاقتصادية", sec_economic),
+        pack("المعلومات الصحية", sec_health_major + sec_health_minor),
+        pack("المعلومات عن السلك العسكري", sec_military),
+        pack("ملاحظات وتوصيات", sec_notes),
+    ]
+    return [g for g in groups if g]
 
 # ——— القائمة ———
 @login_required
@@ -171,7 +245,7 @@ def create_referral(request):
             ref.student_civil_id = student_civil_id or None
             updated_fields.append("student_civil_id")
         if hasattr(ref, "student_key"):
-            ref.student_key = _make_student_key(student_name, student_civil_id)
+            ref.student_key = make_student_key(student_name, student_civil_id)
             updated_fields.append("student_key")
         if updated_fields:
             try: ref.save(update_fields=updated_fields)
@@ -215,10 +289,23 @@ def detail_referral(request, pk: int):
 
     files = getattr(ref, "attachments", Attachment.objects.none()).all()
 
+    counselor_summary = []
+    can_view_counselor_summary = False
+    if HAS_COUNSELOR:
+        try:
+            intake = getattr(ref, "counselor_intake", None)
+        except Exception:
+            intake = None
+        can_view_counselor_summary = (request.user.is_staff or is_counselor or ref.assignee_id == request.user.id)
+        if intake and can_view_counselor_summary:
+            counselor_summary = _counselor_summary_struct(intake)
+
     return render(request, "referrals/detail.html", {
         "r": ref, "assignable": assignable, "actions": actions,
         "is_counselor": is_counselor, "same_student": same_student,
         "files": files, "HAS_COUNSELOR": HAS_COUNSELOR,
+        "counselor_summary": counselor_summary,
+        "can_view_counselor_summary": can_view_counselor_summary,
     })
 
 # ——— تحويل ———
@@ -244,7 +331,6 @@ def assign_referral(request, pk: int):
     Action.objects.create(referral=ref, author=request.user, kind="NOTE",
                           content=f"تحويل إلى {new_assignee.username}")
 
-    # لو المحوِّل اختار نفسه، افتح له فورًا نموذج الموجّه
     if HAS_COUNSELOR and (new_assignee == request.user):
         messages.info(request, "تم تحويل الإحالة لك — افتح نموذج بيانات الموجّه.")
         return redirect("referrals:counselor", pk=ref.pk)
@@ -307,7 +393,7 @@ def close_referral(request, pk: int):
     messages.success(request, "تم إغلاق الإحالة.")
     return redirect("referrals:detail", pk=ref.pk)
 
-# ——— شاشة الموجّه (قالب أو Fallback) ———
+# ——— شاشة الموجّه ———
 @login_required
 @require_http_methods(["GET", "POST"])
 def counselor_intake_view(request, pk: int):
@@ -341,33 +427,33 @@ def counselor_intake_view(request, pk: int):
         return HttpResponse(tmpl.render(context, request))
     except TemplateDoesNotExist:
         pass
-    # 2) Fallback Inline — لا يعتمد على أي ملف
+
+    # 2) Fallback Inline — لا يعتمد على أي ملف (كامل)
     inline_tmpl = engines["django"].from_string("""
 <!doctype html><html lang="ar" dir="rtl"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>نموذج بيانات الموجّه</title>
 <style>
-body{font-family:system-ui,Segoe UI,Roboto,Arial;background:#f6f7fb;margin:0}
-.container{max-width:1100px;margin:28px auto;padding:0 12px}
-.card{background:#fff;border-radius:18px;box-shadow:0 10px 28px rgba(2,6,23,.07);overflow:hidden}
-.header{display:flex;justify-content:space-between;align-items:center;padding:16px 18px;background:linear-gradient(90deg,#06b6d4,#6366f1);color:#fff}
-.section{padding:16px 18px}
-.grid{display:grid;gap:12px}
-.grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
-.grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
-@media(max-width:900px){.grid-2,.grid-3{grid-template-columns:1fr}}
-.h6{margin:0 0 8px 0;font-size:15px;color:#0f172a}
-.box{border:1px solid #e5e7eb;border-radius:12px;padding:12px;background:#fafafa}
-label{display:block;margin-bottom:6px;font-weight:600;color:#334155;font-size:14px}
-input[type="text"],input[type="date"],select,textarea{width:100%;padding:10px 12px;border:1px solid #e5e7eb;border-radius:10px;background:#fff}
-textarea{min-height:90px}
-.row{display:flex;gap:10px;flex-wrap:wrap}
-.badge{background:#eef2ff;color:#1f2937;border-radius:9999px;padding:6px 10px;font-size:12px}
-.actions{display:flex;gap:10px;margin-top:12px}
-.btn{padding:10px 14px;border-radius:10px;border:0;cursor:pointer}
-.btn-primary{background:#2563eb;color:#fff}
-.btn-light{background:#eef2ff;color:#1f2937;text-decoration:none}
-.hr{height:1px;background:#e5e7eb;margin:10px 0}
+  body{font-family:system-ui,Segoe UI,Roboto,Arial;background:#f6f7fb;margin:0}
+  .container{max-width:1100px;margin:28px auto;padding:0 12px}
+  .card{background:#fff;border-radius:18px;box-shadow:0 10px 28px rgba(2,6,23,.07);overflow:hidden}
+  .header{display:flex;justify-content:space-between;align-items:center;padding:16px 18px;background:linear-gradient(90deg,#06b6d4,#6366f1);color:#fff}
+  .section{padding:16px 18px}
+  .grid{display:grid;gap:12px}
+  .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+  @media(max-width:900px){.grid-2,.grid-3{grid-template-columns:1fr}}
+  .h6{margin:0 0 8px 0;font-size:15px;color:#0f172a}
+  .box{border:1px solid #e5e7eb;border-radius:12px;padding:12px;background:#fafafa}
+  label{display:block;margin-bottom:6px;font-weight:600;color:#334155;font-size:14px}
+  input[type="text"],input[type="date"],select,textarea{width:100%;padding:10px 12px;border:1px solid #e5e7eb;border-radius:10px;background:#fff}
+  textarea{min-height:90px}
+  .actions{display:flex;gap:10px;margin-top:12px}
+  .btn{padding:10px 14px;border-radius:10px;border:0;cursor:pointer}
+  .btn-primary{background:#2563eb;color:#fff}
+  .btn-light{background:#eef2ff;color:#1f2937;text-decoration:none}
+  .badge{background:#eef2ff;color:#1f2937;border-radius:9999px;padding:6px 10px;font-size:12px}
+  .hr{height:1px;background:#e5e7eb;margin:10px 0}
 </style></head><body>
 <div class="container"><div class="card">
   <div class="header">
@@ -461,7 +547,7 @@ textarea{min-height:90px}
     <div class="grid grid-2">
       <div><label>{{ form.student_behavior.label }}</label>{{ form.student_behavior }}</div>
       <div><label>{{ form.previous_interventions.label }}</label>{{ form.previous_interventions }}</div>
-      <div class="col-12"><label>{{ form.recommendations.label }}</label>{{ form.recommendations }}</div>
+      <div style="grid-column:1/-1"><label>{{ form.recommendations.label }}</label>{{ form.recommendations }}</div>
     </div>
   </div>
 
@@ -486,4 +572,28 @@ def student_file(request, key: str):
     for r in visible: _ensure_student_key(r)
     items = [r for r in visible if getattr(r, "student_key", "") == key]
     student_name = items[0].student_name if items else ""
-    return render(request, "referrals/student_file.html", {"student_name": student_name, "items": items, "key": key})
+
+    # ملخص لكل إحالة فيها Intake
+    intake_map = {}
+    if HAS_COUNSELOR:
+        for r in items:
+            try:
+                intake = getattr(r, "counselor_intake", None)
+                if intake:
+                    intake_map[r.pk] = _counselor_summary_struct(intake)
+            except Exception:
+                pass
+
+    # أيضًا نجهّز خاصية مباشرة لكل r لسهولة الإدراج في القوالب
+    if HAS_COUNSELOR:
+        for r in items:
+            try:
+                intake = getattr(r, "counselor_intake", None)
+                r.counselor_summary = _counselor_summary_struct(intake) if intake else []
+            except Exception:
+                r.counselor_summary = []
+
+    return render(request, "referrals/student_file.html", {
+        "student_name": student_name, "items": items, "key": key,
+        "intake_map": intake_map, "HAS_COUNSELOR": HAS_COUNSELOR,
+    })

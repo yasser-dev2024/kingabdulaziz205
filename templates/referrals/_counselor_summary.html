@@ -1,0 +1,40 @@
+{# templates/referrals/_counselor_summary.html #}
+<div class="cslr-wrap" dir="rtl">
+  <style>
+    .cslr-wrap{margin-top:12px}
+    .cslr-title{font-size:16px;margin:0 0 8px 0;color:#0f172a}
+    .cslr-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    @media(max-width:900px){.cslr-grid{grid-template-columns:1fr}}
+    .cslr-card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;box-shadow:0 6px 18px rgba(2,6,23,.05)}
+    .cslr-head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid #eef2ff;background:#f8fafc;border-radius:12px 12px 0 0}
+    .cslr-badge{background:#eef2ff;color:#1f2937;border-radius:9999px;padding:4px 8px;font-size:12px}
+    .cslr-body{padding:10px 12px}
+    .cslr-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+    @media(max-width:700px){.cslr-list{grid-template-columns:1fr}}
+    .cslr-item{border:1px dashed #e5e7eb;border-radius:10px;padding:8px;background:#ffffff}
+    .cslr-label{display:block;font-size:12px;color:#64748b;margin-bottom:4px}
+    .cslr-value{font-weight:600;color:#111827}
+  </style>
+
+  <h3 class="cslr-title">ملخص بيانات الموجّه</h3>
+  <div class="cslr-grid">
+    {% for g in groups %}
+      <div class="cslr-card" aria-label="{{ g.title }}">
+        <div class="cslr-head">
+          <strong>{{ g.title }}</strong>
+          <span class="cslr-badge">{{ g.items|length }} عناصر</span>
+        </div>
+        <div class="cslr-body">
+          <div class="cslr-list">
+            {% for label, value in g.items %}
+              <div class="cslr-item">
+                <span class="cslr-label">{{ label }}</span>
+                <span class="cslr-value">{{ value }}</span>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
