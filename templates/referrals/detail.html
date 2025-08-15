@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>تفاصيل الإحالة #{{ r.pk }}</title>
   <style>
-    /* تنسيقات خفيفة غير متداخلة مع تنسيقاتك (أسماء فريدة) */
     .rf-container{max-width:1200px;margin:24px auto;padding:0 12px}
+    .rf-topbar{display:flex;gap:8px;justify-content:flex-end;margin-bottom:8px}
     .rf-section{margin-top:16px}
     .rf-grid{display:grid;gap:12px}
     .rf-grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -28,10 +28,10 @@
 <body>
 <div class="rf-container">
 
-  <!-- أزرار العودة (مضافة) -->
-  <div class="rf-section" style="margin-top:0;margin-bottom:8px;display:flex;gap:8px;flex-wrap:wrap">
-    <a href="{% url 'referrals:index' %}" class="btn" aria-label="العودة للرئيسية">⬅ الرئيسية</a>
-    <a href="javascript:history.back()" class="btn" aria-label="العودة للخلف">↩ رجوع</a>
+  <!-- أزرار رجوع/الرئيسية -->
+  <div class="rf-topbar">
+    <button type="button" class="btn" onclick="history.back()">↩ رجوع</button>
+    <a class="btn" href="/referrals/">الرئيسية ←</a>
   </div>
 
   <!-- رأس الصفحة -->
@@ -56,16 +56,16 @@
     <div class="muted">{{ r.details }}</div>
   </div>
 
-  <!-- ====== إجراءات سريعة + المرفقات ====== -->
+  <!-- إجراءات سريعة + المرفقات -->
   <div class="rf-grid rf-grid-2 rf-section">
 
     <!-- إجراءات سريعة -->
     <div class="card stack">
       <h3>إجراءات سريعة</h3>
 
-      {% if HAS_COUNSELOR %}
-        <a class="btn btn-primary" href="{% url 'referrals:counselor' r.pk %}">نموذج بيانات الموجّه</a>
-      {% endif %}
+       {% if HAS_COUNSELOR and is_counselor %}
+       <a class="btn btn-primary" href="{% url 'referrals:counselor' r.pk %}">نموذج بيانات الموجّه</a>
+       {% endif %}
 
       <form action="{% url 'referrals:assign' r.pk %}" method="post" class="stack" aria-label="تحويل الإحالة">
         {% csrf_token %}
@@ -102,14 +102,14 @@
     </div>
   </div>
 
-  <!-- ====== ملخص بيانات الموجّه (جديد) ====== -->
+  <!-- ملخص بيانات الموجّه (يظهر للمخولّين) -->
   {% if can_view_counselor_summary and counselor_summary %}
     <section id="counselor-summary" class="rf-section">
       {% include "referrals/_counselor_summary.html" with groups=counselor_summary %}
     </section>
   {% endif %}
 
-  <!-- ====== سوابق لنفس الطالب ====== -->
+  <!-- سوابق لنفس الطالب -->
   {% if same_student %}
     <div class="card rf-section">
       <h3>إحالات أخرى لنفس الطالب</h3>
@@ -121,7 +121,7 @@
     </div>
   {% endif %}
 
-  <!-- ====== سجل الإجراءات/المحادثة ====== -->
+  <!-- السجل -->
   <div class="card rf-section">
     <h3>السجل</h3>
     <div class="thread">
@@ -147,7 +147,7 @@
     </div>
   </div>
 
-  <!-- ====== إرسال رد ====== -->
+  <!-- إرسال رد -->
   <div class="card rf-section">
     <h3>إرسال رد</h3>
     <form action="{% url 'referrals:reply' r.pk %}" method="post" enctype="multipart/form-data" class="stack">
