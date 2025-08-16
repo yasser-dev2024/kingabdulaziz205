@@ -1,47 +1,123 @@
-<!-- HEADER (شريط علوي) -->
+<!-- HEADER (بنر علوي + روابط فوق البنر بدون خلفية شريط) -->
 <nav class="hdr-nav" role="navigation" aria-label="الشريط العلوي">
   <style>
-    .hdr-nav{--brand:#1f3c88;--brand-2:#2ebfa5;--accent:#ffb703;--txt:#0b1020;background:
-      linear-gradient(90deg, color-mix(in srgb,var(--brand) 85%,#0000 15%), color-mix(in srgb,var(--brand-2) 75%,#0000 25%));color:#fff;position:sticky;top:0;z-index:50}
-    .hdr-wrap{max-width:1200px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 16px}
+    .hdr-nav{position:relative;z-index:60;color:#fff;--accent:#ffb703}
+
+    /* البنر */
+    .hdr-banner{
+      width:100%;height:220px;
+      background:url('/static/king.png') center/cover no-repeat;
+      position:relative;overflow:visible;z-index:1;
+      /* فراغ بسيط أسفل البنر لعدم تداخل الشعار الدائري */
+      padding-bottom:78px;
+    }
+
+    /* الشريط العلوي الصغير (اختياري) */
+    .hdr-top{
+      max-width:1200px;margin:auto;
+      display:flex;align-items:center;justify-content:space-between;gap:16px;
+      padding:12px 16px;
+      position:absolute;top:8px;right:0;left:0;z-index:3;
+    }
     .hdr-brand{display:flex;align-items:center;gap:10px;font-weight:800}
-    .hdr-logo{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;background:radial-gradient(120% 120% at 30% 20%, var(--accent) 0%, #f59e0b 35%, #9333ea 75%);box-shadow:0 4px 14px rgba(0,0,0,.18)}
+    .hdr-logo{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;
+      background:radial-gradient(120% 120% at 30% 20%, var(--accent) 0%, #f59e0b 35%, #9333ea 75%);
+      box-shadow:0 4px 14px rgba(0,0,0,.18)}
     .hdr-logo svg{width:18px;height:18px;fill:#0b1020}
-    .hdr-title{font-size:18px}
-    .hdr-links{display:flex;align-items:center;gap:8px}
-    .hdr-link{padding:10px 12px;border-radius:12px;text-decoration:none;color:#fff;font-weight:600;border:1px solid rgba(255,255,255,.12);background:transparent;cursor:pointer}
-    .hdr-link:hover{background:rgba(255,255,255,.1)}
-    .hdr-cta{background:#fff;color:#0b1020;border:none}
-    .hdr-user{display:flex;align-items:center;gap:8px}
-    .hdr-logout{background:#e2e8f0;color:#0b1020;border:none}
+    .hdr-title{font-size:18px;text-shadow:0 2px 4px rgba(0,0,0,.35)}
+
+    /* الروابط فوق البنر (بدون شريط) */
+    .hdr-actions{
+      position:absolute;right:30;left:0;bottom:250px; /* أسفل البنر */
+      z-index:4;
+    }
+    .hdr-actions-wrap{
+      max-width:1200px;margin:auto;
+      display:flex;align-items:center;justify-content:space-between;gap:180px;
+      padding:0 19px;
+    }
+
+    /* مجموعة الروابط يمين */
+    .hdr-links{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+    /* زر زجاجي بإطار قوي */
+    .hdr-link{
+      --ring: rgba(255,255,255,.6);
+      --bg1: rgba(237, 4, 4, 0.12);
+      --bg2: rgba(182, 253, 4, 0.06);
+      color:#ffffff;text-decoration:none;font-weight:700;
+      padding:10px 16px;border-radius:14px;
+      background:linear-gradient(180deg,var(--bg1),var(--bg2));
+      border:1.5px solid var(--ring);
+      box-shadow:
+        0 6px 18px rgba(2,6,23,.22),
+        inset 0 0 18px rgba(255,255,255,.08);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      transition:.2s ease;
+      cursor:pointer;
+    }
+    .hdr-link:hover{transform:translateY(-1px);box-shadow:
+        0 10px 22px rgba(2,6,23,.28),
+        inset 0 0 22px rgba(255,255,255,.10);}
+    .hdr-cta{background:#fff;color:#0b1020;border-color:#fff}
+    .hdr-user{display:flex;align-items:center;gap:8px;text-shadow:0 2px 4px rgba(0,0,0,.35)}
+    .hdr-logout{background:#e2e8f0;color:#0b1020;border-color:#e2e8f0}
     .hdr-logout-form{display:inline;margin:0}
+
+    /* ضمان ظهور الشعار الدائري فوق كل شيء وعدم قصّه */
+    .school-badge, .logo-circle { position:relative; z-index:5; }
+
+    /* تجاوبية */
+    @media (max-width:900px){
+      .hdr-actions-wrap{flex-direction:column;align-items:flex-start;gap:10px}
+      .hdr-links{justify-content:flex-start}
+    }
   </style>
 
-  <div class="hdr-wrap">
-    <a class="hdr-brand" href="/" aria-label="الرئيسية">
-      <span class="hdr-logo" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12a7 7 0 1 1 14 0v4a3 3 0 0 1-3 3h-1a1 1 0 0 1-1-1v-5h-4v5a1 1 0 0 1-1 1H8a3 3 0 0 1-3-3v-4z"/></svg></span>
-      <span class="hdr-title">نظام الإحالات</span>
-    </a>
+  <!-- البنر بالصورة -->
+  <div class="hdr-banner">
+    <!-- شعار/عنوان صغير أعلى البنر (اختياري للنقر على الرئيسية) -->
+    <div class="hdr-top">
+      <a class="hdr-brand" href="/" aria-label="الرئيسية">
+        <span class="hdr-logo" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M5 12a7 7 0 1 1 14 0v4a3 3 0 0 1-3 3h-1a1 1 0 0 1-1-1v-5h-4v5a1 1 0 0 1-1 1H8a3 3 0 0 1-3-3v-4z"/></svg>
+        </span>
+        <span class="hdr-title">نظام الإحالات</span>
+      </a>
+      <div></div>
+    </div>
 
-    <div class="hdr-links">
-      <a class="hdr-link" href="/">الرئيسية</a>
-      <a class="hdr-link" href="/referrals/">إحالاتي</a>
-      <a class="hdr-link" href="/referrals/new/">إنشاء إحالة</a>
-      <a class="hdr-link" href="/workflow/reports/">التقارير</a>
-      <a class="hdr-link" href="/messages/">مراسلات</a>
+    <!-- الروابط: فوق البنر مباشرة، بدون خلفية شريط -->
+    <div class="hdr-actions">
+      <div class="hdr-actions-wrap">
+        <!-- يسار: الشعار/العنوان كرابط رئيسية (يبقى كما هو) -->
+        <a class="hdr-brand" href="/" aria-label="الرئيسية" style="text-decoration:none">
+          <span class="hdr-logo" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M5 12a7 7 0 1 1 14 0v4a3 3 0 0 1-3 3h-1a1 1 0 0 1-1-1v-5h-4v5a1 1 0 0 1-1 1H8a3 3 0 0 1-3-3v-4z"/></svg>
+          </span>
+        </a>
 
+        <!-- يمين: الروابط نفسها بدون أي تغيير في المسارات -->
+        <div class="hdr-links">
+          <a class="hdr-link" href="/">الرئيسية</a>
+          <a class="hdr-link" href="/referrals/">إحالاتي</a>
+          <a class="hdr-link" href="/referrals/new/">إنشاء إحالة</a>
+          <a class="hdr-link" href="/workflow/reports/">التقارير</a>
+          <a class="hdr-link" href="/messages/">مراسلات</a>
 
-      {% if request.user.is_authenticated %}
-        <span class="hdr-user">مرحبًا، {{ request.user.username }}</span>
-        <!-- خروج عبر POST لتجنّب 405 -->
-        <form action="{% url 'accounts:logout' %}" method="post" class="hdr-logout-form">
-          {% csrf_token %}
-          <button type="submit" class="hdr-link hdr-logout" aria-label="تسجيل الخروج">خروج</button>
-        </form>
-      {% else %}
-        <a class="hdr-link" href="{% url 'accounts:login' %}">تسجيل الدخول</a>
-        <a class="hdr-link hdr-cta" href="{% url 'accounts:register' %}">إنشاء حساب</a>
-      {% endif %}
+          {% if request.user.is_authenticated %}
+            <span class="hdr-user">مرحبًا، {{ request.user.username }}</span>
+            <form action="{% url 'accounts:logout' %}" method="post" class="hdr-logout-form">
+              {% csrf_token %}
+              <button type="submit" class="hdr-link hdr-logout" aria-label="تسجيل الخروج">خروج</button>
+            </form>
+          {% else %}
+            <a class="hdr-link" href="{% url 'accounts:login' %}">تسجيل الدخول</a>
+            <a class="hdr-link hdr-cta" href="{% url 'accounts:register' %}">إنشاء حساب</a>
+          {% endif %}
+        </div>
+      </div>
     </div>
   </div>
 </nav>
