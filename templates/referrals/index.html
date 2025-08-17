@@ -6,156 +6,176 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>إحالاتي</title>
   <style>
-    /* لوحة ألوان لطيفة وفاتحة */
     :root{
-      --brand:#1f3c88;        /* أزرق أساسي */
-      --brand2:#2ebfa5;       /* تركواز مساعد */
-      --accent:#ffb703;       /* لمسة دافئة */
-      --text:#0f172a;         /* نص داكن مريح */
-      --muted:#64748b;        /* نص ثانوي */
+      --brand:#1f3c88;        /* رئيسي */
+      --mint:#06b6d4;         /* مساعد */
+      --sky:#60a5fa;
+      --txt:#0f172a;          /* نص */
+      --muted:#64748b;        /* ثانوي */
       --line:#e5e7eb;         /* حدود */
-      --chip:#f1f5f9;         /* شارة / خلفية خفيفة */
-      --surface:#ffffff;      /* أسطح البطاقات */
-      --surface2:#f8fafc;     /* أسطح باهتة */
+      --bg:#f7fbff;           /* خلفية ناعمة */
+      --card:#ffffff;         /* بطاقات */
+      --chip:#eef2ff;
+      --shadow:0 14px 34px rgba(2,6,23,.08);
+      --r:18px;
     }
 
-    /* خلفية الصفحة: أبيض مموج + توهجات رقيقة + شبكة متقاطعة شفافة جداً */
+    /* خلفية لطيفة */
     body{
-      margin:0;
-      color:var(--text);
+      margin:0; color:var(--txt);
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Tajawal,Arial;
       background:
-        /* توهج أزرق لطيف أعلى يمين */
-        radial-gradient(1000px 520px at 85% -15%, rgba(59,130,246,.10), transparent 60%),
-        /* توهج تركواز أسفل يسار */
-        radial-gradient(900px 560px at -10% 110%, rgba(45,212,191,.12), transparent 60%),
-        /* خطوط متقاطعة ناعمة */
-        repeating-linear-gradient(45deg, rgba(2,6,23,.035) 0 1px, transparent 1px 26px),
-        repeating-linear-gradient(-45deg, rgba(2,6,23,.028) 0 1px, transparent 1px 26px),
-        /* تموّج أبيض من الأعلى للأسفل */
-        linear-gradient(180deg, #ffffff, #f7fafc 40%, #f4f7ff);
-      background-attachment: fixed,fixed,fixed,fixed,fixed;
+        radial-gradient(1200px 580px at 90% -10%, rgba(99,102,241,.09), transparent 60%),
+        radial-gradient(1000px 650px at -10% 110%, rgba(45,212,191,.12), transparent 60%),
+        linear-gradient(180deg,#fff, var(--bg));
+      min-height:100dvh;
     }
+    .wrap{max-width:1180px; margin:auto; padding:24px 14px}
 
-    .wrap{max-width:1100px;margin:auto;padding:22px 16px}
-    .head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:6px 0 14px}
-    .head h1{margin:0;font-size:clamp(20px,3vw,28px);color:var(--text)}
+    /* ===== عنوان الصفحة ===== */
+    .page-head{display:flex; align-items:end; justify-content:space-between; gap:12px; flex-wrap:wrap; margin:8px 0 18px}
+    .page-title{margin:0; font-weight:900; letter-spacing:.2px; line-height:1.1;
+      font-size:clamp(22px,3.6vw,34px);
+      background:linear-gradient(90deg,var(--brand),var(--mint));
+      -webkit-background-clip:text; background-clip:text; color:transparent}
+    .page-sub{margin:2px 0 0; color:var(--muted); font-size:14px}
+    .underline{height:4px; background:linear-gradient(90deg,var(--brand),var(--mint),var(--sky)); border-radius:999px; width:120px}
 
-    .btn{appearance:none;border:none;border-radius:14px;padding:12px 16px;font-weight:800;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;gap:8px}
-    .btn-primary{
-      color:#fff;
-      background:linear-gradient(100deg,var(--brand) 0%, color-mix(in srgb,var(--brand2) 65%, var(--brand) 35%) 100%);
-      box-shadow:0 10px 18px rgba(31,60,136,.18);
-    }
-    .btn-ghost{
-      background:transparent;color:var(--text);text-decoration:none;
-      border-radius:12px;border:1px solid var(--line);padding:8px 12px
-    }
+    /* أزرار وفلاتر */
+    .topbar{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin:6px 0 16px}
+    .btn{appearance:none; border:1px solid var(--line); background:#fff; color:var(--txt);
+         border-radius:14px; padding:10px 14px; font-weight:800; text-decoration:none; display:inline-flex; gap:8px; align-items:center; transition:.15s}
+    .btn:hover{transform:translateY(-1px); background:#f8fafc}
+    .btn-primary{color:#fff; background:linear-gradient(100deg,#4f46e5 0%, var(--mint) 100%); border-color:transparent; box-shadow:0 10px 22px rgba(6,182,212,.18)}
 
-    /* تبويبات */
-    .tabs{display:flex;gap:8px;margin:10px 0 16px;flex-wrap:wrap}
-    .tab{
-      padding:8px 12px;border-radius:999px;text-decoration:none;
-      color:var(--muted);border:1px solid var(--line);background:#47b9e7aa
-    }
-    .tab.active{background:var(--brand);color:#fff;border-color:var(--brand)}
+    .tabs{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+    .tab{padding:8px 12px; border-radius:999px; border:1px solid var(--line); background:#fff; color:var(--txt); text-decoration:none; font-weight:800; display:inline-flex; gap:8px; align-items:center}
+    .badge{min-width:28px; height:22px; border-radius:999px; display:inline-grid; place-items:center; padding:0 8px; font-size:12px; font-weight:900; color:#1f2937; background:#e2e8f0}
+    .tab.is-active{background:linear-gradient(120deg,#e0e7ff,#cffafe); border-color:transparent; box-shadow:0 6px 18px rgba(15,23,42,.08)}
+    .tab.is-active .badge{background:#1f2937; color:#fff}
 
-    /* شبكة البطاقات */
-    .grid{display:grid;gap:12px}
-    @media(min-width:700px){.grid{grid-template-columns:1fr 1fr}}
+    /* ===== شبكة البطاقات ===== */
+    .grid{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px}
+    @media (max-width:900px){ .grid{grid-template-columns:1fr} }
 
-    /* بطاقة أنيقة فاتحة */
     .card{
-      background:var(--surface);
-      border:1px solid var(--line);
-      border-radius:16px;
-      padding:14px;
-      box-shadow:
-        0 10px 30px rgba(2,6,23,.06),
-        0 2px 8px rgba(2,6,23,.04);
+      position:relative; background:var(--card); border:1px solid var(--line);
+      border-radius:var(--r); overflow:hidden; box-shadow:var(--shadow);
     }
-
-    .row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-    .muted{color:var(--muted);font-size:13px}
-
-    /* شارات التفاصيل */
-    .pill{
-      display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;
-      border:1px solid var(--line);font-size:12px;color:var(--text);background:var(--chip)
+    /* رأس ملون واضح */
+    .card-header{
+      display:grid; grid-template-columns:auto 1fr auto; gap:10px; align-items:center;
+      padding:12px 14px;
+      background:linear-gradient(90deg,#ffffff 0%, #eef2ff 60%, #e6fffb 100%);
+      border-bottom:1px solid var(--line);
     }
-
-    /* حالة عدم وجود بيانات */
-    .empty{
-      background:var(--surface2);
-      border:1px dashed var(--line);
-      border-radius:16px;padding:22px;text-align:center;color:var(--muted)
+    .avatar{
+      width:42px; height:42px; border-radius:12px; display:grid; place-items:center;
+      background:linear-gradient(135deg,#60a5fa,#a5b4fc); color:#0b1220; font-weight:900
     }
+    .student-name{margin:0; font-size:18px; font-weight:900}
+    .small-note{font-size:12px; color:var(--muted)}
+    .counter{font-weight:900; padding:6px 10px; border-radius:999px; background:#fff; border:1px solid var(--line)}
 
-    /* داخل البطاقة: قائمة إحالات الطالب */
-    .refs{display:flex;flex-direction:column;gap:10px;margin-top:10px}
-    .ref-row{
-      display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;
-      background:var(--surface2);
-      border:1px solid var(--line);
-      border-radius:12px;padding:10px 12px;
-    }
-    .ref-meta{display:flex;gap:8px;flex-wrap:wrap}
+    .card-body{padding:12px 14px}
+
+    /* صفوف معلومات بعناوين واضحة */
+    .row{display:flex; flex-wrap:wrap; gap:10px}
+    .info{flex:1 1 auto; min-width:180px; border:1px solid var(--line); background:#f8fafc; border-radius:12px; padding:10px 12px}
+    .info h4{margin:0 0 6px; font-size:13px; color:#334155; letter-spacing:.2px}
+    .info .v{font-weight:900}
+
+    /* شارات */
+    .chips{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px}
+    .chip{padding:6px 10px; border-radius:999px; font-size:12px; font-weight:900; border:1px solid var(--line)}
+    .chip-grade{background:#ecfeff; color:#164e63; border-color:transparent}
+    .chip-type{background:#f5f3ff; color:#4c1d95; border-color:transparent}
+    .chip-status{background:#dcfce7; color:#065f46; border-color:transparent}
+    .chip-ref{background:#fff7ed; color:#92400e; border-color:transparent}
+
+    .actions{margin-top:12px; display:flex; justify-content:flex-end}
+    .link{color:#0b5cab; font-weight:900; text-decoration:none; border-bottom:2px solid rgba(11,92,171,.15); padding-bottom:2px}
+    .link:hover{color:#0a4c8f; border-bottom-color:#0a4c8f}
+
+    .empty{padding:18px; text-align:center; color:var(--muted); background:#fff; border:1px dashed var(--line); border-radius:16px}
   </style>
 </head>
 <body>
   {% include 'header.html' %}
 
   <div class="wrap">
-    <div class="head">
-      <h1>إحالاتي</h1>
-      <a class="btn btn-primary" href="/referrals/new/">
-        <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z"/></svg>
-        إنشاء إحالة
-      </a>
+    <header class="page-head" aria-label="عنوان الصفحة">
+      <div>
+        <h1 class="page-title">إحالاتي</h1>
+        <div class="underline" aria-hidden="true"></div>
+        <p class="page-sub">عرض موجز لإحالاتك بحسب ملف الطالب مع تفاصيل واضحة</p>
+      </div>
+    </header>
+
+    <div class="topbar">
+      <a class="btn btn-primary" href="{% url 'referrals:new' %}">إنشاء إحالة +</a>
+
+      <nav class="tabs" role="tablist" aria-label="تصفية الإحالات">
+        <a class="tab {% if scope == 'all' %}is-active{% endif %}" href="{% url 'referrals:index' %}?scope=all">
+          الكل <span class="badge">{{ counts.all }}</span>
+        </a>
+        <a class="tab {% if scope == 'sent' %}is-active{% endif %}" href="{% url 'referrals:index' %}?scope=sent">
+          مرسلة <span class="badge">{{ counts.sent }}</span>
+        </a>
+        <a class="tab {% if scope == 'inbox' %}is-active{% endif %}" href="{% url 'referrals:index' %}?scope=inbox">
+          واردة <span class="badge">{{ counts.inbox }}</span>
+        </a>
+      </nav>
     </div>
 
-    <!-- تبويبات العرض -->
-    <div class="tabs" role="tablist" aria-label="تصفية الإحالات">
-      <a class="tab {% if scope == 'all' %}active{% endif %}" href="?scope=all">الكل ({{ counts.all }})</a>
-      <a class="tab {% if scope == 'sent' %}active{% endif %}" href="?scope=sent">مرسلة ({{ counts.sent }})</a>
-      <a class="tab {% if scope == 'inbox' %}active{% endif %}" href="?scope=inbox">واردة ({{ counts.inbox }})</a>
-    </div>
-
-    <div class="grid">
-      {% for g in groups %}
-        <div class="card">
-          <div class="row">
-            <div>
-              <strong style="font-size:16px">{{ g.student_name }}</strong>
-              <div class="muted">إجمالي الإحالات: {{ g.referrals|length }}</div>
-            </div>
-            <div class="row" style="gap:8px">
-              {% if g.key %}
-                <a class="btn-ghost" href="{% url 'referrals:student_file' g.key %}">ملف الطالب</a>
-              {% endif %}
-            </div>
-          </div>
-
-          <div class="refs">
-            {% for r in g.referrals %}
-              <div class="ref-row">
-                <div class="ref-meta">
-                  <span class="pill">مرجع: {{ r.reference }}</span>
-                  <span class="pill">الحالة: {{ r.get_status_display }}</span>
-                  <span class="pill">الصف: {{ r.get_grade_display }}</span>
-                  <span class="pill">النوع: {{ r.get_referral_type_display }}</span>
-                  <span class="pill">المرسل: {{ r.created_by.username }}</span>
-                  {% if r.assignee %}<span class="pill">المكلّف: {{ r.assignee.username }}</span>{% endif %}
-                </div>
-                <a class="btn-ghost" href="{% url 'referrals:detail' r.pk %}">تفاصيل</a>
+    {% if groups %}
+      <section class="grid" aria-label="بطاقات ملفات الطلاب">
+        {% for g in groups %}
+          {% with latest=g.referrals.0 %}
+          <article class="card">
+            <header class="card-header">
+              <div class="avatar" aria-hidden="true">{{ g.student_name|default:"?"|slice:":1" }}</div>
+              <div>
+                <h3 class="student-name">{{ g.student_name }}</h3>
+                <div class="small-note">آخر نشاط: {{ latest.updated_at|date:"Y-m-d H:i" }}</div>
               </div>
-            {% endfor %}
-          </div>
-        </div>
-      {% empty %}
-        <div class="empty">لا توجد إحالات لعرضها حالياً.</div>
-      {% endfor %}
-    </div>
+              <div class="counter" title="إجمالي الإحالات">{{ g.referrals|length }}</div>
+            </header>
+
+            <div class="card-body">
+              <div class="row" aria-label="معلومات أساسية">
+                <div class="info">
+                  <h4>المرجع</h4>
+                  <div class="v">{{ latest.reference }}</div>
+                </div>
+                <div class="info">
+                  <h4>المرسل</h4>
+                  <div class="v">{{ latest.created_by.username }}</div>
+                </div>
+                <div class="info">
+                  <h4>المكلّف</h4>
+                  <div class="v">{{ latest.assignee.username|default:"—" }}</div>
+                </div>
+              </div>
+
+              <div class="chips" aria-label="تصنيف">
+                <span class="chip chip-grade">الصف: {{ latest.get_grade_display }}</span>
+                <span class="chip chip-type">النوع: {{ latest.get_referral_type_display }}</span>
+                <span class="chip chip-status">{{ latest.get_status_display }}</span>
+                <span class="chip chip-ref">أنشئت: {{ latest.created_at|date:"Y-m-d H:i" }}</span>
+              </div>
+
+              <div class="actions">
+                <a class="link" href="{% url 'referrals:detail' latest.pk %}">تفاصيل</a>
+              </div>
+            </div>
+          </article>
+          {% endwith %}
+        {% endfor %}
+      </section>
+    {% else %}
+      <div class="empty">لا توجد إحالات لعرضها.</div>
+    {% endif %}
   </div>
 
   {% include 'footer.html' %}
