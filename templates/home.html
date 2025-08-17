@@ -14,9 +14,11 @@
       --bg0:#ffffff; --bg1:#fbfdff; --bg2:#f7fbff;
       --chip:#f1f5f9; --surface:#ffffff; --surface2:#f8fafc;
       --holiday:#e11d48; --highlight:#16a34a; --today:#1d4ed8;
+      --grad1:#4f46e5; --grad2:#06b6d4;
+      --impBlue:#2563eb; --impGreen:#16a34a; --impRed:#dc2626; --impAmber:#d97706;
     }
 
-    /* خلفية بيضاء مضيئة مع خطوط متقاطعة رفيعة */
+    /* خلفية مضيئة */
     body{
       margin:0; color:var(--text);
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Tajawal,Arial;
@@ -50,10 +52,76 @@
       background:var(--chip); border:1px solid var(--line);
       color:var(--text); font-size:13px;
     }
-    @keyframes ticker{
-      from{ transform:translateX(0); }
-      to{ transform:translateX(-50%); }
+    @keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+
+    /* ====== شريط علوي للزر ====== */
+    .imp-bar{
+      display:flex; align-items:center; gap:10px;
+      margin:10px 0 0 0;
     }
+    .imp-btn{
+      display:inline-flex; align-items:center; gap:8px; padding:10px 14px;
+      border-radius:999px; cursor:pointer; user-select:none; color:#fff;
+      background:linear-gradient(90deg,var(--grad2),var(--grad1));
+      box-shadow:0 10px 20px rgba(31,60,136,.20);
+      border:1px solid rgba(255,255,255,.35); font-weight:800;
+      position:relative;
+    }
+    .imp-btn svg{vertical-align:-3px}
+
+    /* اللوحة الجدولية — تظهر عند المرور على الزر */
+    .imp-panel{
+      position:absolute; inset:auto 0 auto auto; /* تحت الزر مباشرة */
+      transform:translateY(12px);
+      width:min(95vw, 760px);
+      border-radius:16px; overflow:hidden;
+      background:#fff; border:1px solid var(--line);
+      box-shadow:0 24px 60px rgba(2,6,23,.20);
+      opacity:0; pointer-events:none; transition:opacity .18s ease, transform .18s ease;
+      z-index:30;
+    }
+    .imp-btn:hover + .imp-panel,
+    .imp-btn:focus + .imp-panel{opacity:1; pointer-events:auto; transform:translateY(8px)}
+
+    .imp-head{
+      padding:12px 16px; font-weight:800; color:#1f2937;
+      background:linear-gradient(90deg,#eef2ff,#f8fafc); border-bottom:1px solid var(--line);
+      display:flex; justify-content:space-between; align-items:center;
+    }
+    .imp-body{max-height:420px; overflow:auto}
+
+    /* جدول أنيق منظم */
+    .imp-table{width:100%; border-collapse:separate; border-spacing:0}
+    .imp-table thead th{
+      position:sticky; top:0; background:#f8fafc; z-index:1;
+      padding:12px; font-weight:900; color:#334155; border-bottom:1px solid var(--line);
+      text-align:center;
+    }
+    .imp-table tbody td{
+      padding:12px; border-bottom:1px solid #eef2f7; background:#ffffff; vertical-align:middle;
+      text-align:center; font-size:14px;
+    }
+    .imp-table tbody tr:nth-child(even) td{background:#fbfdff}
+    .imp-table tbody tr:hover td{background:#f1f8ff}
+
+    /* شريط لوني جانبي حسب النوع */
+    .row-type{width:4px}
+    .type-start{background:var(--impGreen)}
+    .type-flag{background:var(--impBlue)}
+    .type-break{background:var(--impAmber)}
+    .type-off{background:var(--impRed)}
+
+    .g-date{font-weight:800;color:#0f172a; font-variant-numeric:tabular-nums}
+    .h-date{font-weight:800;color:#1d4ed8; font-variant-numeric:tabular-nums}
+
+    .type-badge{
+      display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px;
+      color:#fff; font-weight:900; font-size:12px
+    }
+    .t-off   {background:var(--impRed)}
+    .t-break {background:var(--impAmber)}
+    .t-flag  {background:var(--impBlue)}
+    .t-start {background:var(--impGreen)}
 
     /* ====== بطاقات التاريخ ====== */
     .date-row{display:grid; gap:12px; grid-template-columns:repeat(2,minmax(0,1fr)); margin:16px 0}
@@ -65,7 +133,8 @@
     }
     .date-card h3{margin:0 0 6px 0; font-size:16px}
     .date-badge{
-      padding:8px 12px; border-radius:12px; background:var(--chip); border:1px solid var(--line); font-weight:800
+      padding:8px 12px; border-radius:12px; font-weight:800; color:#fff;
+      background:linear-gradient(90deg,var(--grad1),var(--grad2)); box-shadow:0 6px 14px rgba(79,70,229,.18)
     }
 
     /* ====== التقويم ====== */
@@ -73,26 +142,27 @@
     .cal-head{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px}
     .cal-title{margin:0; font-size:18px}
     .cal-nav{display:flex; gap:8px}
-    .btn{appearance:none; border:1px solid var(--line); background:#0f8cd5; color:var(--text);
-         border-radius:12px; padding:8px 12px; font-weight:700; cursor:pointer}
+    .btn{
+      appearance:none; border:1px solid var(--line); color:#fff;
+      background:linear-gradient(90deg,var(--grad1),var(--grad2));
+      border-radius:12px; padding:8px 12px; font-weight:700; cursor:pointer;
+      box-shadow:0 8px 18px rgba(6,182,212,.18);
+    }
     .btn:disabled{opacity:.5; cursor:default}
 
     .cal{background:var(--surface); border:1px solid var(--line); border-radius:16px; overflow:hidden}
     .cal-grid{display:grid; grid-template-columns:repeat(7,1fr)}
-    .cal-dow, .cal-day{padding:10px 8px; text-align:center; border-bottom:1px solid #1676ed}
-    .cal-dow{background:var(--surface2); font-weight:800; color:var(--muted)}
+    .cal-dow, .cal-day{padding:10px 8px; text-align:center; border-bottom:1px solid #dbeafe}
+    .cal-dow{background:linear-gradient(90deg,#eef2ff,#f8fafc); font-weight:800; color:#475569}
     .cal-day{min-height:64px; position:relative}
     .cal-day .g{font-weight:700}
     .cal-day .h{font-size:11px; color:var(--muted)}
     .cal-day.today{outline:2px solid var(--today); outline-offset:-2px; border-radius:6px}
     .cal-day.holiday{background:linear-gradient(180deg, rgba(225,29,72,.10), rgba(225,29,72,.04))}
-    .cal-day .tag{
-      position:absolute; inset:auto 6px 6px auto; font-size:10px;
-      background:#fff; border:1px solid var(--line); border-radius:999px; padding:2px 6px
-    }
+    .cal-day .tag{position:absolute; inset:auto 6px 6px auto; font-size:10px; background:#fff; border:1px solid var(--line); border-radius:999px; padding:2px 6px}
 
     .legend{display:flex; gap:10px; flex-wrap:wrap; margin-top:10px}
-    .legend .lg{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted)}
+    .legend .lg{display:flex; align-items:center; gap:6px; font-size:12px; color:#64748b}
     .legend .dot{width:10px; height:10px; border-radius:3px}
     .dot-holiday{background:rgba(225,29,72,.6)}
     .dot-today{background:rgba(29,78,216,.7)}
@@ -103,21 +173,47 @@
 
   <div class="wrap">
 
-    <!-- ===== الشريط الإخباري الزجاجي (يقرأ من NewsTicker عبر الكونتكست بروسيسر) ===== -->
+    <!-- ===== الشريط الإخباري ===== -->
     {% with t=news_ticker.text|default:"مرحبًا بكم في نظام الإحالات — يمكن للإدارة تحديث هذا الشريط من لوحة التحكم." %}
     <section class="ticker-shell" aria-label="الشريط الإخباري">
       <div class="ticker-track">
-        <span class="ticker-chip">تنبيه</span>
-        <span>{{ t }}</span>
-
-        <!-- نسخة مكررة لضمان الدوران السلس -->
-        <span class="ticker-chip">تنبيه</span>
-        <span>{{ t }}</span>
+        <span class="ticker-chip">تنبيه</span><span>{{ t }}</span>
+        <span class="ticker-chip">تنبيه</span><span>{{ t }}</span>
       </div>
     </section>
     {% endwith %}
 
-    <!-- ===== بطاقات التاريخ (اليوم ميلادي وهجري) ===== -->
+    <!-- ===== زر مواعيد هامة في الأعلى تحت الشريط ===== -->
+    <div class="imp-bar">
+      <div class="imp-btn" tabindex="0" aria-haspopup="true" aria-label="مواعيد هامة (مرّر أو اضغط لعرض القائمة)">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M13 16h-2v-4h2m0 8h-2v-2h2M1 21h22L12 2 1 21Z"/></svg>
+        مواعيد هامة
+      </div>
+
+      <!-- لوحة جدول منظم وجذاب -->
+      <div class="imp-panel" role="dialog" aria-label="قائمة المواعيد">
+        <div class="imp-head">
+          <span>مواعيد العام (ميلادي / هجري)</span>
+          <span style="font-size:12px;color:#64748b">للإغلاق حرّك المؤشر للخارج</span>
+        </div>
+        <div class="imp-body">
+          <table class="imp-table" id="imp-table">
+            <thead>
+              <tr>
+                <th style="width:6px"></th>
+                <th>الحدث</th>
+                <th>التاريخ الميلادي</th>
+                <th>التاريخ الهجري</th>
+                <th>النوع</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== بطاقات التاريخ ===== -->
     <section class="date-row" aria-label="تاريخ اليوم">
       <div class="date-card">
         <div>
@@ -135,7 +231,7 @@
       </div>
     </section>
 
-    <!-- ===== التقويم السنوي القابل للتصفح ===== -->
+    <!-- ===== التقويم ===== -->
     <section class="cal-wrap" aria-label="التقويم">
       <div class="cal-head">
         <h3 id="cal-title" class="cal-title">التقويم</h3>
@@ -166,27 +262,60 @@
     (function setDates(){
       const now = new Date();
 
-      const gFmt = new Intl.DateTimeFormat('ar-SA', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
-      const hFmtTxt = new Intl.DateTimeFormat('ar-SA-u-ca-islamic', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+      const gText  = new Intl.DateTimeFormat('ar-SA', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+      const hText  = new Intl.DateTimeFormat('ar-SA-u-ca-islamic', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+
       const gBadge = new Intl.DateTimeFormat('en-GB', {day:'2-digit', month:'2-digit', year:'numeric'});
       const hBadge = new Intl.DateTimeFormat('en-TN-u-ca-islamic', {day:'2-digit', month:'2-digit', year:'numeric'});
 
-      document.getElementById('greg-txt').textContent = gFmt.format(now);
-      document.getElementById('hijri-txt').textContent = hFmtTxt.format(now);
+      document.getElementById('greg-txt').textContent   = gText.format(now);
       document.getElementById('greg-badge').textContent = gBadge.format(now);
-      document.getElementById('hijri-badge').textContent = hBadge.format(now);
+
+      document.getElementById('hijri-txt').textContent  = hText.format(now);
+      document.getElementById('hijri-badge').textContent= 'AH ' + hBadge.format(now);
     })();
 
-    // ======= بناء التقويم =======
+    // ======= تعبئة جدول "مواعيد هامة" (منظم وجذاب) =======
+    (function importantDates(){
+      const rows = [
+        {g:'17/08/2025', h:'23/02/1447', t:'عودة المعلمين الممارسين للتدريس', type:'start'},
+        {g:'24/08/2025', h:'01/03/1447', t:'بداية الدراسة للعام الدراسي 1447-1448', type:'start'},
+        {g:'23/09/2025', h:'01/04/1447', t:'اليوم الوطني', type:'flag'},
+        {g:'12/10/2025', h:'20/04/1447', t:'إجازة إضافية', type:'break'},
+        {g:'21/11/2025', h:'30/05/1447', t:'إجازة الخريف', type:'break'},
+        {g:'11/12/2025', h:'20/06/1447', t:'إجازة إضافية', type:'break'},
+        {g:'09/01/2026', h:'20/07/1447', t:'إجازة منتصف العام الدراسي', type:'break'},
+        {g:'22/02/2026', h:'05/09/1447', t:'يوم التأسيس', type:'flag'},
+        {g:'06/03/2026', h:'17/09/1447', t:'عيد الفطر', type:'off'},
+        {g:'11/03/2026', h:'22/09/1447', t:'يوم العلم السعودي', type:'flag'},
+        {g:'22/05/2026', h:'05/12/1447', t:'عيد الأضحى', type:'off'},
+      ];
+
+      const tbody = document.querySelector('#imp-table tbody');
+      tbody.innerHTML = '';
+
+      const label = t => ({off:'تعطيل', break:'إجازة', flag:'مناسبة', start:'بداية'}[t] || 'موعد');
+      const badgeClass = t => ({off:'t-off', break:'t-break', flag:'t-flag', start:'t-start'}[t] || 't-start');
+      const sideClass  = t => ({off:'type-off', break:'type-break', flag:'type-flag', start:'type-start'}[t] || 'type-start');
+
+      rows.forEach(r=>{
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="row-type ${sideClass(r.type)}"></td>
+          <td style="text-align:start;font-weight:800;color:#0f172a">${r.t}</td>
+          <td class="g-date">${r.g}</td>
+          <td class="h-date">${r.h}</td>
+          <td><span class="type-badge ${badgeClass(r.type)}">${label(r.type)}</span></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    })();
+
+    // ======= التقويم =======
     (function calendar(){
       const dow = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
       const gridDow = document.getElementById('cal-grid-dow');
-      dow.forEach(d => {
-        const el = document.createElement('div');
-        el.className = 'cal-dow';
-        el.textContent = d;
-        gridDow.appendChild(el);
-      });
+      dow.forEach(d => { const el = document.createElement('div'); el.className = 'cal-dow'; el.textContent = d; gridDow.appendChild(el); });
 
       const gridDays = document.getElementById('cal-grid-days');
       const titleEl = document.getElementById('cal-title');
@@ -194,10 +323,9 @@
       const btnNext = document.getElementById('next-month');
       const btnToday = document.getElementById('today-month');
 
-      let view = new Date(); // الشهر المعروض
+      let view = new Date();
 
       const hPair = (d) => {
-        // يعيد [شهر هجري رقمي (1..12), يوم هجري]
         const parts = new Intl.DateTimeFormat('en-TN-u-ca-islamic', {month:'numeric', day:'numeric'}).formatToParts(d);
         const m = +parts.find(p=>p.type==='month').value;
         const day = +parts.find(p=>p.type==='day').value;
@@ -205,69 +333,48 @@
       };
 
       function isSaudiHoliday(date){
-        // ثوابت Gregorian
         const m = date.getMonth()+1, d = date.getDate();
         if (m===2 && d===22) return 'يوم التأسيس';
         if (m===9 && d===23) return 'اليوم الوطني';
-
-        // Hijri: عيد الفطر 1–4 شوال (10)، يوم عرفة 9 ذي الحجة (12)، عيد الأضحى 10–13 ذي الحجة
         const [hm, hd] = hPair(date);
         if (hm===10 && hd>=1 && hd<=4) return 'عيد الفطر';
         if (hm===12 && hd===9) return 'يوم عرفة';
         if (hm===12 && hd>=10 && hd<=13) return 'عيد الأضحى';
-
         return null;
       }
 
-      const monthTitle = (d) =>
-        new Intl.DateTimeFormat('ar-SA', {month:'long', year:'numeric'}).format(d);
+      const monthTitle = (d) => new Intl.DateTimeFormat('ar-SA', {month:'long', year:'numeric'}).format(d);
 
       function render(){
-        // عنوان
         titleEl.textContent = 'التقويم – ' + monthTitle(view);
-
-        // تفريغ
         gridDays.innerHTML = '';
 
-        // أول يوم في الشهر
         const y = view.getFullYear(), m = view.getMonth();
         const first = new Date(y, m, 1);
-        const startIdx = first.getDay(); // 0..6 (الأحد=0 في هذه الواجهة)
+        const startIdx = first.getDay();
         const daysInMonth = new Date(y, m+1, 0).getDate();
 
-        // حشو قبل بداية الشهر
         for (let i=0;i<startIdx;i++){
           const pad = document.createElement('div');
           pad.className = 'cal-day';
           gridDays.appendChild(pad);
         }
 
-        // أيام الشهر
         const today = new Date(); today.setHours(0,0,0,0);
         for (let d=1; d<=daysInMonth; d++){
           const cur = new Date(y, m, d);
           const cell = document.createElement('div');
           cell.className = 'cal-day';
 
-          // اليوم
-          const gSpan = document.createElement('div');
-          gSpan.className = 'g';
-          gSpan.textContent = d;
-
-          // هجري صغير
+          const gSpan = document.createElement('div'); gSpan.className = 'g'; gSpan.textContent = d;
           const [hm, hd] = hPair(cur);
-          const hSpan = document.createElement('div');
-          hSpan.className = 'h';
-          hSpan.textContent = hd + ' هـ';
+          const hSpan = document.createElement('div'); hSpan.className = 'h'; hSpan.textContent = hd + ' هـ';
 
-          cell.appendChild(gSpan);
-          cell.appendChild(hSpan);
+          cell.appendChild(gSpan); cell.appendChild(hSpan);
 
-          // تمييز اليوم الحالي
           const cur0 = new Date(cur); cur0.setHours(0,0,0,0);
           if (+cur0 === +today) cell.classList.add('today');
 
-          // الإجازات/المناسبات
           const reason = isSaudiHoliday(cur);
           if (reason){
             cell.classList.add('holiday');
@@ -281,12 +388,10 @@
         }
       }
 
-      // تنقل
       btnPrev.addEventListener('click', ()=>{ view.setMonth(view.getMonth()-1); render(); });
       btnNext.addEventListener('click', ()=>{ view.setMonth(view.getMonth()+1); render(); });
       btnToday.addEventListener('click', ()=>{ view = new Date(); render(); });
 
-      // بداية
       render();
     })();
   </script>
