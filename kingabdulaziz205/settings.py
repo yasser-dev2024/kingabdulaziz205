@@ -28,7 +28,7 @@ INSTALLED_APPS = [
     'accounts',
     'referrals',
     'workflow',
-    'messaging',  # ⭐ تم تعريف تطبيق المراسلات
+    'messaging',  # ⭐ تطبيق المراسلات
 ]
 
 # الوسطاء
@@ -58,6 +58,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'referrals.context_processors.active_news_ticker',  # ✅ تمرير الشريط الإخباري لكل القوالب
             ],
         },
     },
@@ -97,16 +98,10 @@ LOCALE_PATHS = [BASE_DIR / 'locale']
 # ---------------------------------
 # الملفات الثابتة (Static)
 # ---------------------------------
-# رابط التقديم
 STATIC_URL = '/static/'
-
-# المجلد الوحيد لملفات static الخاصة بالمشروع:
-# C:\Users\Test2\kingabdulaziz205\static
 STATICFILES_DIRS = [
     BASE_DIR / 'static',
 ]
-
-# في حالة التجميع للإنتاج (collectstatic)
 STATIC_ROOT = BASE_DIR / 'static_collected'
 
 # ---------------------------------

@@ -37,7 +37,7 @@
       position:relative; border-radius:18px; overflow:hidden;
       background:linear-gradient(180deg, var(--glass2), rgba(255,255,255,.04));
       border:1px solid var(--glass1);
-      box-shadow: 0 10px 30px rgba(2,6,23,.08), inset 0 1px 0 rgba(255,255,255,.35);
+      box-shadow: 0 10px 30px rgba(2,6,23,.08), inset 0 1px 0 rgba(34, 3, 236, 0.35);
       backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
     }
     .ticker-track{
@@ -73,13 +73,13 @@
     .cal-head{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px}
     .cal-title{margin:0; font-size:18px}
     .cal-nav{display:flex; gap:8px}
-    .btn{appearance:none; border:1px solid var(--line); background:#fff; color:var(--text);
+    .btn{appearance:none; border:1px solid var(--line); background:#0f8cd5; color:var(--text);
          border-radius:12px; padding:8px 12px; font-weight:700; cursor:pointer}
     .btn:disabled{opacity:.5; cursor:default}
 
     .cal{background:var(--surface); border:1px solid var(--line); border-radius:16px; overflow:hidden}
     .cal-grid{display:grid; grid-template-columns:repeat(7,1fr)}
-    .cal-dow, .cal-day{padding:10px 8px; text-align:center; border-bottom:1px solid #eef2f7}
+    .cal-dow, .cal-day{padding:10px 8px; text-align:center; border-bottom:1px solid #1676ed}
     .cal-dow{background:var(--surface2); font-weight:800; color:var(--muted)}
     .cal-day{min-height:64px; position:relative}
     .cal-day .g{font-weight:700}
@@ -103,17 +103,19 @@
 
   <div class="wrap">
 
-    <!-- ===== الشريط الإخباري الزجاجي (نص من الإدمن عبر متغير القالب) ===== -->
+    <!-- ===== الشريط الإخباري الزجاجي (يقرأ من NewsTicker عبر الكونتكست بروسيسر) ===== -->
+    {% with t=news_ticker.text|default:"مرحبًا بكم في نظام الإحالات — يمكن للإدارة تحديث هذا الشريط من لوحة التحكم." %}
     <section class="ticker-shell" aria-label="الشريط الإخباري">
       <div class="ticker-track">
         <span class="ticker-chip">تنبيه</span>
-        <span>{{ ticker_text|default:"مرحبا بكم في نظام الإحالات — يمكن للإدارة تحديث هذا الشريط من لوحة التحكم." }}</span>
+        <span>{{ t }}</span>
 
         <!-- نسخة مكررة لضمان الدوران السلس -->
         <span class="ticker-chip">تنبيه</span>
-        <span>{{ ticker_text|default:"مرحبا بكم في نظام الإحالات — يمكن للإدارة تحديث هذا الشريط من لوحة التحكم." }}</span>
+        <span>{{ t }}</span>
       </div>
     </section>
+    {% endwith %}
 
     <!-- ===== بطاقات التاريخ (اليوم ميلادي وهجري) ===== -->
     <section class="date-row" aria-label="تاريخ اليوم">

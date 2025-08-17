@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Referral, Attachment, Action, ActionAttachment
+from .models import Referral, Attachment, Action, ActionAttachment, NewsTicker
 
 @admin.register(Referral)
 class ReferralAdmin(admin.ModelAdmin):
@@ -22,3 +22,13 @@ class ActionAdmin(admin.ModelAdmin):
 @admin.register(ActionAttachment)
 class ActionAttachmentAdmin(admin.ModelAdmin):
     list_display = ("action", "uploaded_by", "uploaded_at")
+
+@admin.register(NewsTicker)
+class NewsTickerAdmin(admin.ModelAdmin):
+    list_display = ("text", "is_active", "starts_at", "ends_at", "created_at")
+    list_filter  = ("is_active",)
+    search_fields = ("text",)
+    fieldsets = (
+        (None, {"fields": ("text", "is_active")}),
+        ("المدى الزمني (اختياري)", {"fields": ("starts_at", "ends_at")}),
+    )

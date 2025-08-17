@@ -102,3 +102,32 @@ class ActionAttachment(models.Model):
 
     def __str__(self):
         return f"مرفق إجراء {self.action_id}"
+
+# =========================
+# شريط إخباري قابل للإدارة
+# =========================
+class NewsTicker(models.Model):
+    text       = models.CharField("نص الشريط", max_length=300)
+    is_active  = models.BooleanField("مفعل", default=True)
+    starts_at  = models.DateTimeField("يبدأ من", blank=True, null=True)
+    ends_at    = models.DateTimeField("ينتهي في", blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "شريط إخباري"
+        verbose_name_plural = "أشرطة إخبارية"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return (self.text[:40] + "…") if len(self.text) > 40 else self.text
+
+    @property
+    def is_visible(self):
+        now = timezone.now()
+        if not self.is_active:
+            return False
+        if self.starts_at and now < self.starts_at:
+            return False
+        if self.ends_at and now > self.ends_at:
+            return False
+        return True
