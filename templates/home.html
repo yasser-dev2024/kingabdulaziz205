@@ -13,12 +13,13 @@
       --glass2: rgba(255,255,255,.10);
       --bg0:#ffffff; --bg1:#fbfdff; --bg2:#f7fbff;
       --chip:#f1f5f9; --surface:#ffffff; --surface2:#f8fafc;
-      --holiday:#e11d48; --highlight:#16a34a; --today:#1d4ed8;
+      --holiday:#e11d48; --today:#1d4ed8;
       --grad1:#4f46e5; --grad2:#06b6d4;
-      --impBlue:#2563eb; --impGreen:#16a34a; --impRed:#dc2626; --impAmber:#d97706;
+      --gA:#2563eb; --gB:#06b6d4;   /* Gregorian gradient */
+      --hA:#16a34a; --hB:#06b6d4;   /* Hijri gradient */
+      --shadow: 0 10px 30px rgba(2,6,23,.08);
     }
 
-    /* خلفية مضيئة */
     body{
       margin:0; color:var(--text);
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Tajawal,Arial;
@@ -34,12 +35,12 @@
 
     .wrap{max-width:1100px;margin:auto;padding:22px 16px}
 
-    /* ====== الشريط الإخباري الزجاجي ====== */
+    /* ====== الشريط الإخباري ====== */
     .ticker-shell{
       position:relative; border-radius:18px; overflow:hidden;
       background:linear-gradient(180deg, var(--glass2), rgba(255,255,255,.04));
       border:1px solid var(--glass1);
-      box-shadow: 0 10px 30px rgba(2,6,23,.08), inset 0 1px 0 rgba(34, 3, 236, 0.35);
+      box-shadow: var(--shadow), inset 0 1px 0 rgba(34, 3, 236, 0.35);
       backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
     }
     .ticker-track{
@@ -47,15 +48,16 @@
       animation: ticker 22s linear infinite;
       font-weight:700; letter-spacing:.2px; color:#0b1220;
     }
-    .ticker-chip{
-      padding:6px 10px; border-radius:999px;
-      background:var(--chip); border:1px solid var(--line);
-      color:var(--text); font-size:13px;
-    }
+    .ticker-chip{padding:6px 10px; border-radius:999px; background:var(--chip); border:1px solid var(--line); color:var(--text); font-size:13px}
     @keyframes ticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 
-    /* ====== شريط أزرار علوي تحت الشريط الإخباري ====== */
-    .top-actions{display:flex; gap:12px; align-items:center; margin:12px 0 0 0}
+    /* ====== شريط الأزرار + بطاقات التاريخ المصغّرة ====== */
+    .actions-bar{
+      display:flex; align-items:center; justify-content:space-between; gap:12px; margin-top:12px; flex-wrap:wrap;
+    }
+
+    /* أزرار اللوحات */
+    .top-actions{display:flex; gap:12px; align-items:center}
     .drop{position:relative}
     .btn-pill{
       display:inline-flex; align-items:center; gap:8px; padding:10px 14px;
@@ -65,16 +67,12 @@
       border:1px solid rgba(255,255,255,.35); font-weight:800;
     }
     .btn-pill svg{vertical-align:-3px}
-
     .panel{
-      position:absolute; right:0; top:100%;
-      transform:translateY(12px);
+      position:absolute; right:0; top:100%; transform:translateY(12px);
       width:min(96vw, 820px);
-      border-radius:16px; overflow:hidden;
-      background:#fff; border:1px solid var(--line);
+      border-radius:16px; overflow:hidden; background:#fff; border:1px solid var(--line);
       box-shadow:0 24px 60px rgba(2,6,23,.20);
-      opacity:0; pointer-events:none; transition:opacity .18s ease, transform .18s ease;
-      z-index:30;
+      opacity:0; pointer-events:none; transition:opacity .18s ease, transform .18s ease; z-index:30;
     }
     .drop:hover .panel, .drop:focus-within .panel{opacity:1; pointer-events:auto; transform:translateY(8px)}
     .panel-head{
@@ -84,7 +82,47 @@
     }
     .panel-body{max-height:440px; overflow:auto}
 
-    /* ====== جدول المواعيد المنظم ====== */
+    /* بطاقات التاريخ المصغّرة */
+    .mini-dates{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .mini-date{
+      position:relative; display:flex; align-items:center; gap:10px;
+      padding:10px 12px; border-radius:16px;
+      background:rgba(255,255,255,.85); border:1px solid rgba(15,23,42,.08);
+      box-shadow:0 8px 18px rgba(2,6,23,.06); backdrop-filter: blur(8px);
+      animation: pulse 3s ease-in-out infinite;
+    }
+    .mini-date::after{
+      content:""; position:absolute; inset:-1.5px; border-radius:17px; z-index:0; opacity:.75;
+      background:conic-gradient(from 0deg, var(--gA), var(--gB), #a78bfa, var(--gA));
+      -webkit-mask:linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor; mask-composite: exclude; padding:1.5px;
+    }
+    .mini-date.h::after{background:conic-gradient(from 0deg, var(--hA), var(--hB), #4f46e5, var(--hA))}
+    @keyframes pulse{
+      0%,100%{box-shadow:0 8px 18px rgba(2,6,23,.06)}
+      50%{box-shadow:0 8px 26px rgba(6,182,212,.18)}
+    }
+
+    .badge{
+      position:relative; z-index:1;
+      width:36px; height:36px; border-radius:12px; display:flex; align-items:center; justify-content:center; color:#fff; font-weight:900;
+      box-shadow:0 6px 14px rgba(79,70,229,.18)
+    }
+    .badge.g{background:linear-gradient(135deg,var(--gA),var(--gB))}
+    .badge.h{background:linear-gradient(135deg,var(--hA),var(--hB))}
+
+    .num{
+      position:relative; z-index:1;
+      font-size:28px; line-height:1; font-weight:1000; min-width:34px; text-align:center;
+      background:linear-gradient(90deg,var(--gA),var(--gB)); -webkit-background-clip:text; background-clip:text; color:transparent;
+    }
+    .mini-date.h .num{background:linear-gradient(90deg,var(--hA),var(--hB)); -webkit-background-clip:text; color:transparent}
+
+    .meta{position:relative; z-index:1; display:flex; flex-direction:column; line-height:1.2}
+    .meta .line1{font-weight:900; font-size:13.5px}
+    .meta .line2{font-size:11.5px; color:var(--muted); font-variant-numeric:tabular-nums}
+
+    /* ====== جدول المواعيد داخل اللوحة ====== */
     .imp-table{width:100%; border-collapse:separate; border-spacing:0}
     .imp-table thead th{
       position:sticky; top:0; background:#f8fafc; z-index:1;
@@ -94,40 +132,19 @@
     .imp-table tbody tr:nth-child(even) td{background:#fbfdff}
     .imp-table tbody tr:hover td{background:#f1f8ff}
     .row-type{width:4px}
-    .type-start{background:var(--impGreen)}
-    .type-flag{background:var(--impBlue)}
-    .type-break{background:var(--impAmber)}
-    .type-off{background:var(--impRed)}
+    .type-start{background:#16a34a} .type-flag{background:#2563eb}
+    .type-break{background:#d97706} .type-off{background:#dc2626}
     .g-date{font-weight:800;color:#0f172a; font-variant-numeric:tabular-nums}
     .h-date{font-weight:800;color:#1d4ed8; font-variant-numeric:tabular-nums}
     .type-badge{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; color:#fff; font-weight:900; font-size:12px}
-    .t-off{background:var(--impRed)} .t-break{background:var(--impAmber)} .t-flag{background:var(--impBlue)} .t-start{background:var(--impGreen)}
+    .t-off{background:#dc2626} .t-break{background:#d97706} .t-flag{background:#2563eb} .t-start{background:#16a34a}
 
-    /* ====== بطاقات التاريخ ====== */
-    .date-row{display:grid; gap:12px; grid-template-columns:repeat(2,minmax(0,1fr)); margin:16px 0}
-    @media(max-width:700px){ .date-row{grid-template-columns:1fr} }
-    .date-card{
-      background:var(--surface); border:1px solid var(--line); border-radius:16px;
-      padding:14px; box-shadow:0 10px 30px rgba(2,6,23,.06), 0 2px 8px rgba(2,6,23,.04);
-      display:flex; align-items:center; justify-content:space-between; gap:12px;
-    }
-    .date-card h3{margin:0 0 6px 0; font-size:16px}
-    .date-badge{
-      padding:8px 12px; border-radius:12px; font-weight:800; color:#fff;
-      background:linear-gradient(90deg,var(--grad1),var(--grad2)); box-shadow:0 6px 14px rgba(79,70,229,.18)
-    }
-
-    /* ====== التقويم (للوحة المنسدلة) ====== */
+    /* ====== التقويم داخل اللوحة ====== */
     .cal{background:var(--surface); border-top:1px solid var(--line)}
     .cal-head{display:flex; align-items:center; justify-content:space-between; gap:10px; padding:12px 14px}
     .cal-title{margin:0; font-size:16px}
     .cal-nav{display:flex; gap:8px}
-    .btn{
-      appearance:none; border:1px solid var(--line); color:#fff;
-      background:linear-gradient(90deg,var(--grad1),var(--grad2));
-      border-radius:12px; padding:8px 12px; font-weight:700; cursor:pointer;
-      box-shadow:0 8px 18px rgba(6,182,212,.18);
-    }
+    .btn{appearance:none; border:1px solid var(--line); color:#fff; background:linear-gradient(90deg,var(--grad1),var(--grad2)); border-radius:12px; padding:8px 12px; font-weight:700; cursor:pointer; box-shadow:0 8px 18px rgba(6,182,212,.18)}
     .cal-grid{display:grid; grid-template-columns:repeat(7,1fr)}
     .cal-dow, .cal-day{padding:10px 8px; text-align:center; border-bottom:1px solid #dbeafe}
     .cal-dow{background:linear-gradient(90deg,#eef2ff,#f8fafc); font-weight:800; color:#475569}
@@ -144,7 +161,6 @@
     .dot-holiday{background:rgba(225,29,72,.6)}
     .dot-today{background:rgba(29,78,216,.7)}
 
-    /* إخفاء قسم التقويم الأصلي للحفاظ على البنية بدون إظهاره */
     .cal-wrap-original[hidden]{display:none !important}
   </style>
 </head>
@@ -152,8 +168,6 @@
   {% include 'header.html' %}
 
   <div class="wrap">
-
-    <!-- ===== الشريط الإخباري ===== -->
     {% with t=news_ticker.text|default:"مرحبًا بكم في نظام الإحالات — يمكن للإدارة تحديث هذا الشريط من لوحة التحكم." %}
     <section class="ticker-shell" aria-label="الشريط الإخباري">
       <div class="ticker-track">
@@ -163,107 +177,144 @@
     </section>
     {% endwith %}
 
-    <!-- ===== الأزرار العلوية: مواعيد هامة + التقويم (منسدلان بالمرور) ===== -->
-    <div class="top-actions">
-      <!-- مواعيد هامة -->
-      <div class="drop">
-        <button class="btn-pill" type="button" aria-haspopup="true" aria-label="مواعيد هامة (مرّر أو اضغط)">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M13 16h-2v-4h2m0 8h-2v-2h2M1 21h22L12 2 1 21Z"/></svg>
-          مواعيد هامة
-        </button>
-        <div class="panel" role="dialog" aria-label="قائمة المواعيد">
-          <div class="panel-head">
-            <span>مواعيد العام (ميلادي / هجري)</span>
-            <span style="font-size:12px;color:#64748b">للإغلاق حرّك المؤشر للخارج</span>
+    <!-- الأزرار + بطاقات التاريخ المصغّرة -->
+    <div class="actions-bar">
+      <div class="top-actions">
+        <!-- مواعيد هامة -->
+        <div class="drop">
+          <button class="btn-pill" type="button" aria-haspopup="true" aria-label="مواعيد هامة (مرّر أو اضغط)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M13 16h-2v-4h2m0 8h-2v-2h2M1 21h22L12 2 1 21Z"/></svg>
+            مواعيد هامة
+          </button>
+          <div class="panel" role="dialog" aria-label="قائمة المواعيد">
+            <div class="panel-head">
+              <span>مواعيد العام (ميلادي / هجري)</span>
+              <span style="font-size:12px;color:#64748b">للإغلاق حرّك المؤشر للخارج</span>
+            </div>
+            <div class="panel-body">
+              <table class="imp-table" id="imp-table">
+                <thead>
+                  <tr>
+                    <th style="width:6px"></th>
+                    <th>الحدث</th>
+                    <th>التاريخ الميلادي</th>
+                    <th>التاريخ الهجري</th>
+                    <th>النوع</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
           </div>
-          <div class="panel-body">
-            <table class="imp-table" id="imp-table">
-              <thead>
-                <tr>
-                  <th style="width:6px"></th>
-                  <th>الحدث</th>
-                  <th>التاريخ الميلادي</th>
-                  <th>التاريخ الهجري</th>
-                  <th>النوع</th>
-                </tr>
-              </thead>
-              <tbody></tbody>
-            </table>
+        </div>
+
+        <!-- التقويم -->
+        <div class="drop">
+          <button class="btn-pill" type="button" aria-haspopup="true" aria-label="التقويم (مرّر أو اضغط)">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7 11h10v2H7v-2Zm-2 8h14V7H5v12Zm2-16h2V1h2v2h4V1h2v2h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h2Z"/></svg>
+            التقويم
+          </button>
+          <div class="panel" role="dialog" aria-label="لوحة التقويم">
+            <div class="panel-head">
+              <span id="calp-title" class="cal-title">التقويم</span>
+              <div class="cal-nav">
+                <button id="calp-prev" class="btn" type="button">◀ الشهر السابق</button>
+                <button id="calp-today" class="btn" type="button">اليوم</button>
+                <button id="calp-next" class="btn" type="button">الشهر التالي ▶</button>
+              </div>
+            </div>
+            <div class="panel-body">
+              <div class="cal">
+                <div class="cal-grid" id="calp-dow"></div>
+                <div class="cal-grid" id="calp-days"></div>
+              </div>
+              <div class="legend">
+                <div class="lg"><span class="dot dot-today"></span> اليوم</div>
+                <div class="lg"><span class="dot dot-holiday"></span> إجازة/مناسبة سعودية</div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      <!-- التقويم (نفس نمط المواعيد) -->
-      <div class="drop">
-        <button class="btn-pill" type="button" aria-haspopup="true" aria-label="التقويم (مرّر أو اضغط)">
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M7 11h10v2H7v-2Zm-2 8h14V7H5v12Zm2-16h2V1h2v2h4V1h2v2h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h2Z"/></svg>
-          التقويم
-        </button>
-        <div class="panel" role="dialog" aria-label="لوحة التقويم">
-          <div class="panel-head">
-            <span id="calp-title" class="cal-title">التقويم</span>
-            <div class="cal-nav">
-              <button id="calp-prev" class="btn" type="button">◀ الشهر السابق</button>
-              <button id="calp-today" class="btn" type="button">اليوم</button>
-              <button id="calp-next" class="btn" type="button">الشهر التالي ▶</button>
-            </div>
+      <!-- بطاقات التاريخ المصغّرة -->
+      <div class="mini-dates">
+        <!-- Gregorian -->
+        <div class="mini-date g" aria-live="polite" aria-label="التاريخ الميلادي">
+          <div class="badge g">AD</div>
+          <div class="num" id="g-mini-big">—</div>
+          <div class="meta">
+            <div class="line1" id="g-line1">—</div>
+            <div class="line2" id="g-line2">—</div>
           </div>
-          <div class="panel-body">
-            <div class="cal">
-              <div class="cal-grid" id="calp-dow"></div>
-              <div class="cal-grid" id="calp-days"></div>
-            </div>
-            <div class="legend">
-              <div class="lg"><span class="dot dot-today"></span> اليوم</div>
-              <div class="lg"><span class="dot dot-holiday"></span> إجازة/مناسبة سعودية</div>
-            </div>
+        </div>
+
+        <!-- Hijri -->
+        <div class="mini-date h" aria-live="polite" aria-label="التاريخ الهجري">
+          <div class="badge h">AH</div>
+          <div class="num" id="h-mini-big">—</div>
+          <div class="meta">
+            <div class="line1" id="h-line1">—</div>
+            <div class="line2" id="h-line2">—</div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- ===== بطاقات التاريخ ===== -->
-    <section class="date-row" aria-label="تاريخ اليوم">
-      <div class="date-card">
-        <div>
-          <h3>تاريخ اليوم (ميلادي)</h3>
-          <div id="greg-txt" class="muted">—</div>
-        </div>
-        <div id="greg-badge" class="date-badge">—</div>
-      </div>
-      <div class="date-card">
-        <div>
-          <h3>تاريخ اليوم (هجري)</h3>
-          <div id="hijri-txt" class="muted">—</div>
-        </div>
-        <div id="hijri-badge" class="date-badge">—</div>
-      </div>
-    </section>
-
-    <!-- ===== التقويم الأصلي (مخفي للحفاظ على البنية كما هي) ===== -->
+    <!-- التقويم الأصلي (مخفي للحفاظ على البنية) -->
     <section class="cal-wrap-original" aria-label="التقويم" hidden>
       <div class="cal">
         <div class="cal-grid"></div>
         <div class="cal-grid"></div>
       </div>
     </section>
-
   </div>
 
   {% include 'footer.html' %}
 
   <script>
-    // ======= تاريخ اليوم (ميلادي/هجري) =======
-    (function setDates(){
+    // ======= أدوات مساعدة =======
+    const pad2 = v => (v<10? '0'+v : ''+v);
+
+    // ======= بطاقات التاريخ (بالصيغ المطلوبة) =======
+    (function setMiniDates(){
       const now = new Date();
-      const gText  = new Intl.DateTimeFormat('ar-SA', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
-      const hText  = new Intl.DateTimeFormat('ar-SA-u-ca-islamic', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
-      const gBadge = new Intl.DateTimeFormat('en-GB', {day:'2-digit', month:'2-digit', year:'numeric'});
-      const hBadge = new Intl.DateTimeFormat('en-TN-u-ca-islamic', {day:'2-digit', month:'2-digit', year:'numeric'});
-      document.getElementById('greg-txt').textContent   = gText.format(now);
-      document.getElementById('greg-badge').textContent = gBadge.format(now);
-      document.getElementById('hijri-txt').textContent  = hText.format(now);
-      document.getElementById('hijri-badge').textContent= 'AH ' + hBadge.format(now);
+
+      /* === Gregorian (إجبار استخدام التقويم الميلادي) === */
+      const gDayNum   = now.getDate();
+      const gMonthNum = now.getMonth()+1;
+      const gYear     = now.getFullYear();
+
+      // نستخدم ar-EG (تقويم ميلادي) أو ar-SA-u-ca-gregory لضمان "أغسطس" وليس "صفر"
+      let gMonthName = new Intl.DateTimeFormat('ar-EG', {month:'long'}).format(now);
+      // احتياط إضافي لو كان المتصفح يُعيد أسماء هجري:
+      const hijriNames = ['محرم','صفر','ربيع','جمادى','رجب','شعبان','رمضان','شوال','ذو القعدة','ذو الحجة'];
+      if (hijriNames.some(n => gMonthName.includes(n))) {
+        gMonthName = new Intl.DateTimeFormat('ar-SA-u-ca-gregory', {month:'long'}).format(now);
+      }
+
+      const gLine1 = `${gDayNum} ${gMonthName} ${gYear}`;            // 17 اغسطس 2025
+      const gLine2 = `${gYear}/${pad2(gMonthNum)}/${pad2(gDayNum)}`; // 2025/08/17
+
+      document.getElementById('g-mini-big').textContent = gDayNum;
+      document.getElementById('g-line1').textContent    = gLine1;
+      document.getElementById('g-line2').textContent    = gLine2;
+
+      /* === Hijri === */
+      const hParts = new Intl.DateTimeFormat('en-TN-u-ca-islamic', {weekday:'long', year:'numeric', month:'numeric', day:'numeric'}).formatToParts(now);
+      const hp = Object.fromEntries(hParts.map(p=>[p.type,p.value]));
+      const hYear = +hp.year, hMonth = +hp.month, hDay = +hp.day;
+
+      const hWeekName  = new Intl.DateTimeFormat('ar-SA-u-ca-islamic', {weekday:'long'}).format(now); // الأحد
+      const hMonthName = new Intl.DateTimeFormat('ar-SA-u-ca-islamic', {month:'long'}).format(now);   // صفر
+
+      const hLine1 = `${hWeekName} ${hDay}${hMonthName} ${hYear}`; // الاحد 23صفر 1447
+      const hLine2 = `${hYear}/${hMonth}/${hDay}`;                 // 1447/2/23
+      const hBig   = new Intl.DateTimeFormat('ar-SA-u-ca-islamic', {day:'numeric'}).format(now);
+
+      document.getElementById('h-mini-big').textContent = hBig;
+      document.getElementById('h-line1').textContent    = hLine1;
+      document.getElementById('h-line2').textContent    = hLine2;
     })();
 
     // ======= جدول "مواعيد هامة" =======
@@ -299,7 +350,7 @@
       });
     })();
 
-    // ======= مُكوّن التقويم القابل لإعادة الاستخدام (لللوحة) =======
+    // ======= التقويم داخل اللوحة =======
     function setupCalendar(ids){
       const gridDow  = document.getElementById(ids.dow);
       const gridDays = document.getElementById(ids.days);
@@ -383,15 +434,7 @@
       render();
     }
 
-    // تشغيل التقويم داخل اللوحة المنسدلة
-    setupCalendar({
-      title:'calp-title',
-      dow:'calp-dow',
-      days:'calp-days',
-      prev:'calp-prev',
-      next:'calp-next',
-      today:'calp-today'
-    });
+    setupCalendar({ title:'calp-title', dow:'calp-dow', days:'calp-days', prev:'calp-prev', next:'calp-next', today:'calp-today' });
   </script>
 </body>
 </html>
