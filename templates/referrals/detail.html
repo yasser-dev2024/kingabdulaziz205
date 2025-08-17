@@ -1,167 +1,373 @@
+{% load static %}
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>تفاصيل الإحالة #{{ r.pk }}</title>
+
   <style>
-    .rf-container{max-width:1200px;margin:24px auto;padding:0 12px}
-    .rf-topbar{display:flex;gap:8px;justify-content:flex-end;margin-bottom:8px}
-    .rf-section{margin-top:16px}
-    .rf-grid{display:grid;gap:12px}
-    .rf-grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
-    @media(max-width:900px){.rf-grid-2{grid-template-columns:1fr}}
-    .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:12px}
-    .stack>*+*{margin-top:10px}
-    .btn{display:inline-block;padding:9px 14px;border-radius:10px;border:0;background:#eef2ff;color:#111;text-decoration:none;cursor:pointer}
-    .btn-primary{background:#2563eb;color:#fff}
-    .btn-danger{background:#ef4444;color:#fff}
-    .badge{background:#eef2ff;color:#1f2937;border-radius:999px;padding:4px 10px;font-size:12px}
-    .muted{color:#6b7280}
-    .title{display:flex;align-items:center;gap:8px;margin:0 0 8px 0}
-    .hr{height:1px;background:#e5e7eb;margin:10px 0}
-    .file{display:flex;justify-content:space-between;align-items:center;padding:6px 8px;border:1px dashed #e5e7eb;border-radius:10px}
-    .thread{display:flex;flex-direction:column;gap:10px}
-    .note{border:1px solid #e5e7eb;border-radius:10px;padding:10px;background:#fafafa}
+    :root{
+      --brand:#1f3c88; --brand2:#06b6d4; --accent:#ffb703;
+      --text:#0f172a; --muted:#64748b; --line:#e5e7eb;
+      --surface:#ffffff; --surface2:#f8fafc; --chip:#eef2ff;
+      --ok:#16a34a; --warn:#d97706; --danger:#dc2626; --info:#2563eb;
+      --shadow:0 12px 28px rgba(2,6,23,.08);
+      --r:18px;
+      --ring: 0 0 0 3px rgba(31,60,136,.18);
+    }
+
+    body{
+      margin:0; color:var(--text);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Tajawal,Arial;
+      background:
+        radial-gradient(1100px 560px at 85% -15%, rgba(59,130,246,.08), transparent 60%),
+        radial-gradient(950px 600px at -10% 110%, rgba(45,212,191,.10), transparent 60%),
+        linear-gradient(180deg,#ffffff, #f7fbff);
+      min-height:100dvh;
+    }
+    .wrap{max-width:1200px;margin:auto;padding:22px 16px}
+
+    /* ——— عناصر عامة ——— */
+    .btn{appearance:none; border:1px solid var(--line); background:#fff; color:var(--text);
+         border-radius:12px; padding:9px 14px; font-weight:800; cursor:pointer; transition:.15s}
+    .btn:hover{background:#f8fafc; transform:translateY(-1px)}
+    .btn:focus{outline:none; box-shadow:var(--ring)}
+    .btn-primary{color:#fff; background:linear-gradient(90deg,#4f46e5,#06b6d4); border-color:transparent; box-shadow:0 12px 22px rgba(6,182,212,.18)}
+    .btn-danger{color:#fff; background:linear-gradient(90deg,#ef4444,#f59e0b); border-color:transparent}
+    .btn-light{background:#f1f5f9}
+    .btn-icon{display:inline-flex; align-items:center; gap:8px}
+
+    .badge{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px;
+           font-weight:900; font-size:12px; color:#1f2937; background:#e2e8f0; border:1px solid #cbd5e1}
+    .chip{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; font-weight:900; font-size:12px}
+    .chip-blue{background:#e0e7ff; color:#1e3a8a}
+    .chip-green{background:#dcfce7; color:#065f46}
+    .chip-amber{background:#fef3c7; color:#92400e}
+    .chip-red{background:#fee2e2; color:#991b1b}
+    .chip-gray{background:#e5e7eb; color:#374151}
+
+    .card{
+      position:relative; background:var(--surface); border:1px solid var(--line);
+      border-radius:var(--r); box-shadow:var(--shadow); overflow:hidden;
+    }
+    .card:before{
+      content:""; position:absolute; inset:0 auto 0 0; width:6px;
+      background:linear-gradient(180deg,var(--brand),var(--brand2));
+    }
+    .card-head{padding:14px 18px; border-bottom:1px solid var(--line);
+      background:linear-gradient(90deg,#eef2ff,#f8fafc);
+      display:flex; align-items:center; justify-content:space-between; gap:10px}
+    .card-body{padding:16px 18px}
+
+    .grid{display:grid; gap:16px}
+    .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+    @media(max-width:980px){ .grid-2,.grid-3{grid-template-columns:1fr} }
+
+    .title{margin:0; font-size:18px}
+    .muted{color:var(--muted)}
+    .hr{height:1px; background:var(--line); margin:10px 0}
+
+    /* ——— شريط أعلى الصفحة (روابط رجوع) ——— */
+    .topbar{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+    .crumbs a{color:#334155; text-decoration:none}
+    .crumbs a:hover{text-decoration:underline}
+
+    /* ——— بطاقات مفاتيح/قيم ——— */
+    .kv{display:flex; align-items:center; gap:8px; flex-wrap:wrap}
+    .kv .k{font-size:12px; color:#64748b}
+    .kv .v{font-weight:900}
+
+    /* ——— حالة الإحالة ——— */
+    .status{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+    .st-NEW{background:#dbeafe; color:#1e40af}
+    .st-UNDER_REVIEW{background:#fef9c3; color:#92400e}
+    .st-SENT_TO_DEPUTY{background:#e0f2fe; color:#075985}
+    .st-CLOSED{background:#fee2e2; color:#991b1b}
+
+    /* ——— المرفقات ——— */
+    .file{display:flex; justify-content:space-between; align-items:center; gap:10px;
+          padding:10px 12px; border:1px dashed #cbd5e1; border-radius:12px; background:#f8fafc}
+    .file a{font-weight:800; text-decoration:none; color:#0f172a; word-break:break-all}
+    .file small{color:#64748b}
+
+    /* ——— التايملاين ——— */
+    .timeline{position:relative; margin:8px 0}
+    .timeline::before{content:""; position:absolute; inset:0 auto 0 22px; width:2px; background:linear-gradient(#e2e8f0,#cbd5e1)}
+    .tl{position:relative; padding:10px 10px 10px 56px}
+    .dot{position:absolute; left:13px; top:16px; width:18px; height:18px; border-radius:50%; background:#94a3b8; box-shadow:0 0 0 4px #fff}
+    .k-REPLY .dot{background:#2563eb}
+    .k-NOTE .dot{background:#10b981}
+    .k-DECISION .dot{background:#f59e0b}
+    .tl-head{display:flex; align-items:center; gap:10px; flex-wrap:wrap}
+    .tl-head .meta{color:#64748b; font-size:12px}
+    .tl-body{background:#fff; border:1px solid #e5e7eb; border-radius:12px; padding:10px; margin-top:8px}
+    .tl-files{display:flex; gap:8px; flex-wrap:wrap; margin-top:6px}
+    .pill{display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; font-weight:900; font-size:12px}
+
+    /* ——— ملخص الموجّه ——— */
+    .summary{display:grid; gap:12px}
+    .group{border:1px solid var(--line); border-radius:14px; overflow:hidden; background:#fff}
+    .group h4{margin:0; padding:10px 12px; font-size:14px; background:#f8fafc; border-bottom:1px solid var(--line)}
+    .list{padding:10px 12px; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px}
+    .item{display:flex; justify-content:space-between; gap:10px; background:#ffffff; border:1px dashed #e5e7eb; border-radius:10px; padding:8px 10px}
+    .item .label{color:#334155; font-size:13px}
+    .item .value{font-weight:800}
+
+    /* ——— حقول الإدخال ——— */
+    .field{display:flex; flex-direction:column; gap:6px}
+    .field label{font-weight:800; color:#334155; font-size:13px}
+    .field input[type="file"], .field textarea, .field select{width:100%; padding:10px 12px; border:1px solid #e5e7eb; border-radius:12px; background:#fff}
+    .field textarea{min-height:110px}
+
+    /* ——— حركات خفيفة ——— */
+    @media (prefers-reduced-motion: no-preference){
+      .fade{animation:fade .28s ease both}
+      @keyframes fade{from{opacity:.0; transform:translateY(6px)} to{opacity:1; transform:none}}
+    }
   </style>
 </head>
 <body>
-<div class="rf-container">
+  {% include 'header.html' %}
 
-  <!-- أزرار رجوع/الرئيسية -->
-  <div class="rf-topbar">
-    <button type="button" class="btn" onclick="history.back()">↩ رجوع</button>
-    <a class="btn" href="/referrals/">الرئيسية ←</a>
-  </div>
+  <div class="wrap">
 
-  <!-- رأس الصفحة -->
-  <div class="card">
-    <h2 class="title">
-      <span class="badge">#{{ r.pk }}</span>
-      <span>تفاصيل الإحالة</span>
-    </h2>
-    <div class="rf-grid rf-grid-2">
-      <div class="stack">
-        <div><strong>اسم الطالب:</strong> {{ r.student_name }}</div>
-        <div><strong>الصف:</strong> {{ r.get_grade_display|default:r.grade }}</div>
-        <div><strong>النوع:</strong> {{ r.get_referral_type_display|default:r.referral_type }}</div>
+    <!-- روابط الرجوع / معلومات سريعة -->
+    <div class="topbar">
+      <div class="crumbs">
+        <a class="btn btn-light" href="{% url 'home' %}">الرئيسية</a>
+        <a class="btn btn-light" href="{% url 'referrals:index' %}" style="margin-inline-start:6px">↩ رجوع</a>
       </div>
-      <div class="stack">
-        <div><strong>الحالة:</strong> {{ r.get_status_display|default:r.status }}</div>
-        <div><strong>منشأ بواسطة:</strong> {{ r.created_by.username }}</div>
-        <div><strong>المكلّف الحالي:</strong> {{ r.assignee.username|default:"—" }}</div>
-      </div>
-    </div>
-    <div class="hr"></div>
-    <div class="muted">{{ r.details }}</div>
-  </div>
-
-  <!-- إجراءات سريعة + المرفقات -->
-  <div class="rf-grid rf-grid-2 rf-section">
-
-    <!-- إجراءات سريعة -->
-    <div class="card stack">
-      <h3>إجراءات سريعة</h3>
-
-      {% if HAS_COUNSELOR and is_counselor %}
-        <a class="btn btn-primary" href="{% url 'referrals:counselor' r.pk %}">نموذج بيانات الموجّه</a>
-      {% endif %}
-
-      <form action="{% url 'referrals:assign' r.pk %}" method="post" class="stack" aria-label="تحويل الإحالة">
-        {% csrf_token %}
-        <label for="assignee">تحويل إلى مستخدم</label>
-        <select id="assignee" name="assignee" required>
-          {% for u in assignable %}
-            <option value="{{ u.id }}">{{ u.profile.full_name|default:u.username }}</option>
-          {% endfor %}
-        </select>
-        <button class="btn" type="submit">تحويل</button>
-      </form>
-
-      <form action="{% url 'referrals:close' r.pk %}" method="post" onsubmit="return confirm('تأكيد إغلاق الإحالة؟');">
-        {% csrf_token %}
-        <button class="btn btn-danger" type="submit">إغلاق الإحالة</button>
-      </form>
+      <span class="badge">رقم الإحالة: #{{ r.pk }}</span>
+      <span class="chip st-{{ r.status }}">{{ r.get_status_display }}</span>
+      <span class="chip chip-blue">{{ r.get_referral_type_display }}</span>
+      <span class="chip chip-green">الصف: {{ r.get_grade_display }}</span>
     </div>
 
-    <!-- المرفقات -->
-    <div class="card stack">
-      <h3>المرفقات</h3>
-      {% if files %}
-        <div class="stack">
-          {% for f in files %}
-            <div class="file">
-              <span>{{ f.filename|default:f.file.name }}</span>
-              <a class="btn" href="{{ f.file.url }}" target="_blank" rel="noopener">عرض</a>
-            </div>
-          {% endfor %}
+    <!-- بطاقة العنوان -->
+    <section class="card fade" style="margin-top:12px">
+      <div class="card-head">
+        <h3 class="title">تفاصيل الإحالة</h3>
+        <div class="status">
+          <span class="badge">الطالب: <b>{{ r.student_name }}</b></span>
+          <span class="badge">أنشأها: <b>{{ r.created_by.username }}</b></span>
+          <span class="badge">المكلّف الحالي: <b>{{ r.assignee.username|default:"—" }}</b></span>
         </div>
-      {% else %}
-        <div class="muted">لا توجد مرفقات.</div>
-      {% endif %}
-    </div>
-  </div>
+      </div>
+      <div class="card-body">
+        <div class="grid grid-3">
+          <div class="kv">
+            <span class="k">المعرّف المرجعي</span>
+            <span class="v" id="refVal">{{ r.reference }}</span>
+            <button class="btn btn-light" type="button" onclick="copyRef()">نسخ</button>
+          </div>
+          <div class="kv">
+            <span class="k">تاريخ الإنشاء</span>
+            <span class="v">{{ r.created_at|date:"Y-m-d H:i" }}</span>
+          </div>
+          <div class="kv">
+            <span class="k">آخر تحديث</span>
+            <span class="v">{{ r.updated_at|date:"Y-m-d H:i" }}</span>
+          </div>
+        </div>
 
-  <!-- ملخص بيانات الموجّه (يظهر للمخولّين) -->
-  {% if can_view_counselor_summary and counselor_summary %}
-    <section id="counselor-summary" class="rf-section">
-      {% include "referrals/_counselor_summary.html" with groups=counselor_summary %}
+        <div class="hr"></div>
+
+        <div style="display:grid; gap:10px">
+          <div class="kv">
+            <span class="k">وصف مختصر</span>
+            <span class="v" style="line-height:1.9">{{ r.details|linebreaksbr }}</span>
+          </div>
+        </div>
+      </div>
     </section>
-  {% endif %}
 
-  <!-- سوابق لنفس الطالب -->
-  {% if same_student %}
-    <div class="card rf-section">
-      <h3>إحالات أخرى لنفس الطالب</h3>
-      <ul>
-        {% for x in same_student %}
-          <li><a href="{% url 'referrals:detail' x.pk %}">إحالة #{{ x.pk }}</a> – <span class="muted">{{ x.created_at|date:"Y-m-d H:i" }}</span></li>
-        {% endfor %}
-      </ul>
-    </div>
-  {% endif %}
-
-  <!-- السجل -->
-  <div class="card rf-section">
-    <h3>السجل</h3>
-    <div class="thread">
-      {% for a in actions %}
-        <div class="note">
-          <div class="muted">{{ a.created_at|date:"Y-m-d H:i" }} • {{ a.author.username }} • {{ a.get_kind_display|default:a.kind }}</div>
-          <div>{{ a.content|linebreaksbr }}</div>
-          {% if a.files.all %}
-            <div class="hr"></div>
-            <div class="stack">
-              {% for af in a.files.all %}
+    <!-- صف: المرفقات + إجراءات -->
+    <div class="grid grid-2" style="margin-top:16px">
+      <!-- المرفقات -->
+      <section class="card fade">
+        <div class="card-head">
+          <h3 class="title">المرفقات</h3>
+          <span class="muted">{{ files|length }} ملف</span>
+        </div>
+        <div class="card-body">
+          {% if files %}
+            <div class="grid" style="gap:10px">
+              {% for f in files %}
                 <div class="file">
-                  <span>{{ af.filename|default:af.file.name }}</span>
-                  <a class="btn" href="{{ af.file.url }}" target="_blank" rel="noopener">عرض</a>
+                  <a href="{{ f.file.url }}" target="_blank" rel="noopener">📎 {{ f.file.name|slice:"60" }}</a>
+                  <small>بواسطة {{ f.uploaded_by.username }} — {{ f.uploaded_at|date:"Y-m-d H:i" }}</small>
                 </div>
               {% endfor %}
             </div>
+          {% else %}
+            <div class="muted">لا توجد مرفقات.</div>
           {% endif %}
         </div>
-      {% empty %}
-        <div class="muted">لا يوجد سجل بعد.</div>
-      {% endfor %}
+      </section>
+
+      <!-- إجراءات سريعة -->
+      <section class="card fade">
+        <div class="card-head">
+          <h3 class="title">إجراءات سريعة</h3>
+          {% if HAS_COUNSELOR %}
+            <a class="btn btn-primary btn-icon" href="{% url 'referrals:counselor' r.pk %}">📝 نموذج بيانات الموجّه</a>
+          {% endif %}
+        </div>
+        <div class="card-body">
+          <div class="grid">
+
+            <!-- تحويل -->
+            <form method="post" action="{% url 'referrals:assign' r.pk %}" class="grid" style="gap:10px">
+              {% csrf_token %}
+              <div class="field">
+                <label>تحويل إلى مستخدم</label>
+                <select name="assignee">
+                  {% for u in assignable %}
+                    <option value="{{ u.id }}" {% if r.assignee_id == u.id %}selected{% endif %}>{{ u.username }}</option>
+                  {% endfor %}
+                </select>
+              </div>
+              <div>
+                <button class="btn btn-primary" type="submit">تحويل</button>
+              </div>
+            </form>
+
+            <!-- إغلاق -->
+            <form method="post" action="{% url 'referrals:close' r.pk %}">
+              {% csrf_token %}
+              <button class="btn btn-danger" type="submit">إغلاق الإحالة</button>
+            </form>
+          </div>
+        </div>
+      </section>
     </div>
+
+    <!-- ملخص الموجّه -->
+    {% if HAS_COUNSELOR and can_view_counselor_summary and counselor_summary %}
+      <section class="card fade" style="margin-top:16px">
+        <div class="card-head">
+          <h3 class="title">ملخص بيانات الموجّه</h3>
+          <span class="muted">أبرز الحقول بشكل مختصر</span>
+        </div>
+        <div class="card-body summary">
+          {% for sec in counselor_summary %}
+            <div class="group">
+              <h4>{{ sec.title }}</h4>
+              <div class="list">
+                {% for pair in sec.items %}
+                  <div class="item">
+                    <span class="label">{{ pair.0 }}</span>
+                    <span class="value">{{ pair.1 }}</span>
+                  </div>
+                {% endfor %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
+
+    <!-- إضافة رد -->
+    <section class="card fade" style="margin-top:16px">
+      <div class="card-head">
+        <h3 class="title">إضافة رد/ملاحظة</h3>
+        <span class="muted">حتى 5 ملفات — الأنواع المسموح بها فقط</span>
+      </div>
+      <div class="card-body">
+        <form method="post" action="{% url 'referrals:reply' r.pk %}" enctype="multipart/form-data" class="grid">
+          {% csrf_token %}
+          <div class="field">
+            <label>النص</label>
+            <textarea name="content" placeholder="اكتب الرد هنا..."></textarea>
+          </div>
+          <div class="field">
+            <label>ملفات</label>
+            <input type="file" name="reply_files" multiple />
+          </div>
+          <div>
+            <button class="btn btn-primary" type="submit">إرسال الرد</button>
+          </div>
+        </form>
+      </div>
+    </section>
+
+    <!-- سجل الإجراءات -->
+    <section class="card fade" style="margin-top:16px">
+      <div class="card-head">
+        <h3 class="title">سجل الإجراءات</h3>
+        <span class="muted">{{ actions|length }} عنصر</span>
+      </div>
+      <div class="card-body">
+        {% if actions %}
+          <div class="timeline">
+            {% for a in actions %}
+              <div class="tl k-{{ a.kind }}">
+                <span class="dot"></span>
+                <div class="tl-head">
+                  <span class="pill {% if a.kind == 'REPLY' %}chip-blue{% elif a.kind == 'NOTE' %}chip-green{% elif a.kind == 'DECISION' %}chip-amber{% else %}chip-gray{% endif %}">
+                    {{ a.get_kind_display }}
+                  </span>
+                  <span class="meta">بواسطة {{ a.author.username }} — {{ a.created_at|date:"Y-m-d H:i" }}</span>
+                </div>
+                {% if a.content %}
+                  <div class="tl-body">{{ a.content|linebreaksbr }}</div>
+                {% endif %}
+                {% if a.files.all %}
+                  <div class="tl-files">
+                    {% for f in a.files.all %}
+                      <a class="btn btn-light" href="{{ f.file.url }}" target="_blank" rel="noopener">📎 {{ f.file.name|slice:"50" }}</a>
+                    {% endfor %}
+                  </div>
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="muted">لا يوجد سجل بعد.</div>
+        {% endif %}
+      </div>
+    </section>
+
+    <!-- إحالات لنفس الطالب -->
+    {% if same_student %}
+      <section class="card fade" style="margin-top:16px">
+        <div class="card-head">
+          <h3 class="title">إحالات أخرى لنفس الطالب</h3>
+          <span class="muted">{{ same_student|length }} عنصر</span>
+        </div>
+        <div class="card-body">
+          <div class="grid">
+            {% for x in same_student %}
+              <div class="file">
+                <div>
+                  <div style="font-weight:900">{{ x.reference }} — {{ x.get_referral_type_display }} — {{ x.get_status_display }}</div>
+                  <small>تاريخ: {{ x.created_at|date:"Y-m-d H:i" }}</small>
+                </div>
+                <a class="btn" href="{% url 'referrals:detail' x.pk %}">فتح</a>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </section>
+    {% endif %}
   </div>
 
-  <!-- إرسال رد -->
-  <div class="card rf-section">
-    <h3>إرسال رد</h3>
-    <form action="{% url 'referrals:reply' r.pk %}" method="post" enctype="multipart/form-data" class="stack">
-      {% csrf_token %}
-      <label for="content">النص</label>
-      <textarea id="content" name="content" placeholder="اكتب ردك هنا..."></textarea>
+  {% include 'footer.html' %}
 
-      <label for="reply_files">مرفقات (اختياري)</label>
-      <input id="reply_files" type="file" name="reply_files" multiple>
-
-      <button class="btn btn-primary" type="submit">إرسال</button>
-    </form>
-  </div>
-
-</div>
+  <script>
+    function copyRef(){
+      const t = document.getElementById('refVal')?.textContent?.trim() || '';
+      if (!t) return;
+      navigator.clipboard?.writeText(t).then(()=> {
+        const btn = document.querySelector('#refVal + .btn');
+        if(!btn) return;
+        const old = btn.textContent;
+        btn.textContent = 'تم النسخ ✓';
+        setTimeout(()=> btn.textContent = old, 1200);
+      });
+    }
+  </script>
 </body>
 </html>
