@@ -295,7 +295,8 @@ def detail_referral(request, pk: int):
             intake = getattr(ref, "counselor_intake", None)
         except Exception:
             intake = None
-        can_view_counselor_summary = (request.user.is_staff or is_counselor or ref.assignee_id == request.user.id)
+        # 👇 هنا التعديل: كل من يملك صلاحية عرض الإحالة يرى الملخص
+        can_view_counselor_summary = _can_view(request.user, ref)
         if intake and can_view_counselor_summary:
             counselor_summary = _counselor_summary_struct(intake)
 

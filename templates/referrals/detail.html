@@ -63,9 +63,9 @@
     <div class="card stack">
       <h3>إجراءات سريعة</h3>
 
-       {% if HAS_COUNSELOR and is_counselor %}
-       <a class="btn btn-primary" href="{% url 'referrals:counselor' r.pk %}">نموذج بيانات الموجّه</a>
-       {% endif %}
+      {% if HAS_COUNSELOR and is_counselor %}
+        <a class="btn btn-primary" href="{% url 'referrals:counselor' r.pk %}">نموذج بيانات الموجّه</a>
+      {% endif %}
 
       <form action="{% url 'referrals:assign' r.pk %}" method="post" class="stack" aria-label="تحويل الإحالة">
         {% csrf_token %}
