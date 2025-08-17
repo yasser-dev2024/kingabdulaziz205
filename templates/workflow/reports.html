@@ -2,37 +2,248 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>التقارير</title>
+
   <style>
-    :root{--brand:#1f3c88;--brand2:#2ebfa5;--accent:#ffb703;--txt:#0f172a;--bg:#f8fafc}
-    body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Tajawal,Arial;color:var(--txt)}
-    .wrap{max-width:1100px;margin:auto;padding:18px 16px}
-    .head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:6px 0 14px}
-    .head h1{margin:0;font-size:clamp(20px,3vw,28px)}
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
-    .card{background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:16px;padding:16px}
-    .num{font-size:28px;font-weight:900}
-    .muted{color:#64748b;font-size:13px}
+    :root{
+      --brand:#1f3c88; --brand2:#06b6d4;
+      --text:#0f172a; --muted:#64748b; --line:#e5e7eb;
+      --surface:#ffffff; --surface2:#f8fafc;
+      --ok:#16a34a; --warn:#d97706; --danger:#dc2626; --info:#2563eb;
+      --violet:#7c3aed; --teal:#0ea5e9; --amber:#f59e0b; --rose:#f43f5e; --emerald:#10b981;
+      --shadow:0 12px 28px rgba(2,6,23,.08);
+      --r:18px;
+    }
+
+    body{
+      margin:0; color:var(--text);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Tajawal,Arial;
+      background:
+        radial-gradient(1100px 560px at 85% -15%, rgba(59,130,246,.08), transparent 60%),
+        radial-gradient(950px 600px at -10% 110%, rgba(45,212,191,.10), transparent 60%),
+        linear-gradient(180deg,#ffffff, #f7fbff);
+      min-height:100dvh;
+    }
+
+    .wrap{max-width:1200px;margin:auto;padding:22px 16px}
+
+    /* ===== عنوان الصفحة ===== */
+    .page-head{display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap}
+    .title{margin:0; font-size:26px; letter-spacing:.3px}
+    .sub{color:var(--muted); font-size:13px}
+
+    /* ===== بطاقات الإحصاءات ===== */
+    .stats{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:14px; margin-top:16px}
+    @media(max-width:1100px){ .stats{grid-template-columns:repeat(3,minmax(0,1fr))} }
+    @media(max-width:820px){ .stats{grid-template-columns:repeat(2,minmax(0,1fr))} }
+    @media(max-width:520px){ .stats{grid-template-columns:1fr} }
+
+    .card{
+      position:relative; background:var(--surface); border:1px solid var(--line);
+      border-radius:var(--r); box-shadow:var(--shadow); overflow:hidden;
+      padding:14px; isolation:isolate;
+    }
+    .card .k{font-size:13px; color:var(--muted); margin-bottom:6px}
+    .card .v{font-size:34px; font-weight:900; line-height:1}
+    .card .footer{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-top:12px}
+    .tag{font-size:11px; padding:6px 10px; border-radius:999px; background:#eef2ff; color:#1e3a8a; border:1px solid #e5e7eb; font-weight:800}
+
+    /* ألوان الخلفيات المزخرفة */
+    .bg-i::after, .bg-s::after, .bg-w::after, .bg-d::after, .bg-v::after, .bg-e::after{
+      content:""; position:absolute; inset:auto -10% -20% auto; width:160px; height:160px; border-radius:50%;
+      filter:blur(32px); opacity:.23; z-index:-1;
+    }
+    .bg-i::after{background:conic-gradient(from 90deg,var(--teal),#7dd3fc)}
+    .bg-s::after{background:conic-gradient(from 90deg,var(--emerald),#86efac)}
+    .bg-w::after{background:conic-gradient(from 90deg,var(--amber),#fde68a)}
+    .bg-d::after{background:conic-gradient(from 90deg,var(--rose),#fecaca)}
+    .bg-v::after{background:conic-gradient(from 90deg,var(--violet),#c4b5fd)}
+    .bg-e::after{background:conic-gradient(from 90deg,var(--info),#bfdbfe)}
+
+    /* شريط تقدم */
+    .bar{height:9px; background:#f1f5f9; border-radius:999px; overflow:hidden; border:1px solid #e5e7eb}
+    .bar > span{display:block; height:100%; width:0; border-radius:inherit; transition:width .6s ease}
+    .bar-i > span{background:linear-gradient(90deg,var(--teal),#60a5fa)}
+    .bar-s > span{background:linear-gradient(90deg,var(--emerald),#86efac)}
+    .bar-w > span{background:linear-gradient(90deg,var(--amber),#fde68a)}
+    .bar-d > span{background:linear-gradient(90deg,var(--rose),#fecaca)}
+
+    /* أزرار سريعة */
+    .actions{display:flex; gap:8px; flex-wrap:wrap; margin-top:14px}
+    .btn{appearance:none; border:1px solid var(--line); background:#fff; color:var(--text);
+         border-radius:12px; padding:9px 14px; font-weight:800; cursor:pointer; transition:.15s; text-decoration:none}
+    .btn:hover{background:#f8fafc; transform:translateY(-1px)}
+    .btn-primary{color:#fff; background:linear-gradient(90deg,#4f46e5,#06b6d4); border-color:transparent}
+    .btn-soft{background:#f1f5f9}
+
+    /* لوحة سفلية (نسب ملخّصة) */
+    .panel{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:14px; margin-top:16px}
+    @media(max-width:900px){.panel{grid-template-columns:1fr}}
+    .mini{
+      background:var(--surface); border:1px solid var(--line); border-radius:var(--r);
+      box-shadow:var(--shadow); padding:14px;
+    }
+    .mini h4{margin:0 0 10px 0; font-size:15px}
+    .hint{color:var(--muted); font-size:12px}
   </style>
 </head>
 <body>
   {% include 'header.html' %}
+
   <div class="wrap">
-    <div class="head">
-      <h1>التقارير</h1>
+    <div class="page-head">
+      <h1 class="title">التقارير</h1>
+      <span class="sub">نظرة عامة سريعة على إحالاتك ونشاط الشهر</span>
     </div>
 
-    <div class="grid">
-      <div class="card"><div class="num">{{ totals.all }}</div><div class="muted">إجمالي الإحالات</div></div>
-      <div class="card"><div class="num">{{ totals.open }}</div><div class="muted">قيد المراجعة/المفتوحة</div></div>
-      <div class="card"><div class="num">{{ totals.closed }}</div><div class="muted">مغلقة</div></div>
-      <div class="card"><div class="num">{{ totals.sent }}</div><div class="muted">مرسلة بواسطتك</div></div>
-      <div class="card"><div class="num">{{ totals.inbox }}</div><div class="muted">واردة إليك</div></div>
-      <div class="card"><div class="num">{{ totals.last_30 }}</div><div class="muted">أُنشئت آخر 30 يوم</div></div>
+    <!-- بطاقات الأرقام -->
+    <section class="stats" aria-label="ملخص الإحصاءات">
+      <div class="card bg-i">
+        <div class="k">إجمالي الإحالات</div>
+        <div class="v" id="val-all" data-v="{{ totals.all|default:0 }}">0</div>
+        <div class="footer">
+          <span class="tag">الكل</span>
+          <div class="bar bar-i" title="آخر 30 يومًا"><span id="bar-last30"></span></div>
+        </div>
+      </div>
+
+      <div class="card bg-s">
+        <div class="k">قيد المراجعة / المفتوحة</div>
+        <div class="v" id="val-open" data-v="{{ totals.open|default:0 }}">0</div>
+        <div class="footer">
+          <span class="tag">نشِطة</span>
+          <div class="bar bar-s"><span id="bar-open"></span></div>
+        </div>
+      </div>
+
+      <div class="card bg-d">
+        <div class="k">مغلقة</div>
+        <div class="v" id="val-closed" data-v="{{ totals.closed|default:0 }}">0</div>
+        <div class="footer">
+          <span class="tag">مكتملة</span>
+          <div class="bar bar-d"><span id="bar-closed"></span></div>
+        </div>
+      </div>
+
+      <div class="card bg-v">
+        <div class="k">أنشأت خلال آخر 30 يومًا</div>
+        <div class="v" id="val-last30" data-v="{{ totals.last_30|default:0 }}">0</div>
+        <div class="footer">
+          <span class="tag">30 يوم</span>
+          <div class="bar bar-i"><span id="bar-last30-2"></span></div>
+        </div>
+      </div>
+
+      <div class="card bg-e">
+        <div class="k">مرسلة بواسطتك</div>
+        <div class="v" id="val-sent" data-v="{{ totals.sent|default:0 }}">0</div>
+        <div class="footer">
+          <span class="tag">صادر</span>
+          <div class="bar bar-w"><span id="bar-sent"></span></div>
+        </div>
+      </div>
+
+      <div class="card bg-w">
+        <div class="k">واردة إليك</div>
+        <div class="v" id="val-inbox" data-v="{{ totals.inbox|default:0 }}">0</div>
+        <div class="footer">
+          <span class="tag">وارد</span>
+          <div class="bar bar-w"><span id="bar-inbox"></span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- أزرار تنقل سريعة (تعتمد على المسارات الموجودة) -->
+    <div class="actions" aria-label="اختصارات">
+      <a class="btn btn-primary" href="{% url 'referrals:index' %}">فتح الإحالات</a>
+      <a class="btn btn-soft" href="{% url 'referrals:index' %}?scope=inbox">الوارد إليّ</a>
+      <a class="btn btn-soft" href="{% url 'referrals:index' %}?scope=sent">ما أرسلته</a>
+      <a class="btn btn-soft" href="{% url 'referrals:new' %}">إنشاء إحالة جديدة</a>
     </div>
+
+    <!-- لوحات نسب سريعة -->
+    <section class="panel" aria-label="نسب مئوية">
+      <div class="mini">
+        <h4>نسبة الإحالات النشطة</h4>
+        <div class="bar bar-s"><span id="p-open"></span></div>
+        <div class="hint"><span id="p-open-text">0%</span> من إجمالي الإحالات ما زالت قيد المتابعة</div>
+      </div>
+
+      <div class="mini">
+        <h4>نسبة الإحالات المغلقة</h4>
+        <div class="bar bar-d"><span id="p-closed"></span></div>
+        <div class="hint"><span id="p-closed-text">0%</span> من الإجمالي تم إكمالها وإغلاقها</div>
+      </div>
+
+      <div class="mini">
+        <h4>نشاط آخر 30 يومًا</h4>
+        <div class="bar bar-i"><span id="p-last30"></span></div>
+        <div class="hint"><span id="p-last30-text">0%</span> من الإحالات أُنشئت مؤخرًا</div>
+      </div>
+    </section>
   </div>
+
   {% include 'footer.html' %}
+
+  <script>
+    // عدّاد رقم لطيف
+    function animateCount(el){
+      const target = +el.dataset.v || 0;
+      const dur = 600; // ms
+      const start = performance.now();
+      function tick(now){
+        const p = Math.min(1, (now - start)/dur);
+        el.textContent = Math.round(target * p);
+        if(p < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }
+
+    // ضبط الأعمدة النسبية
+    function setWidth(id, percent){
+      const el = document.getElementById(id);
+      if(!el) return;
+      el.style.width = Math.max(0, Math.min(100, percent)) + '%';
+    }
+    function pct(part, all){
+      if(!all) return 0;
+      return Math.round((part/all) * 100);
+    }
+
+    (function init(){
+      const all     = +(document.getElementById('val-all')?.dataset.v || 0);
+      const open    = +(document.getElementById('val-open')?.dataset.v || 0);
+      const closed  = +(document.getElementById('val-closed')?.dataset.v || 0);
+      const last30  = +(document.getElementById('val-last30')?.dataset.v || 0);
+      const sent    = +(document.getElementById('val-sent')?.dataset.v || 0);
+      const inbox   = +(document.getElementById('val-inbox')?.dataset.v || 0);
+
+      // أرقام متحركة
+      ['val-all','val-open','val-closed','val-last30','val-sent','val-inbox']
+        .forEach(id => { const el = document.getElementById(id); if(el) animateCount(el); });
+
+      // أشرطة تقدّم داخل البطاقات
+      setWidth('bar-open',    pct(open, all));
+      setWidth('bar-closed',  pct(closed, all));
+      setWidth('bar-last30',  pct(last30, all));
+      setWidth('bar-last30-2',pct(last30, Math.max(1, all))); // نسخة ثانية للزخرفة
+      setWidth('bar-sent',    pct(sent, all));
+      setWidth('bar-inbox',   pct(inbox, all));
+
+      // لوحات النِسَب
+      const pOpen   = pct(open, all);
+      const pClosed = pct(closed, all);
+      const pL30    = pct(last30, all);
+      setWidth('p-open',   pOpen);
+      setWidth('p-closed', pClosed);
+      setWidth('p-last30', pL30);
+      const fmt = v => isFinite(v) ? v + '%' : '0%';
+      document.getElementById('p-open-text').textContent   = fmt(pOpen);
+      document.getElementById('p-closed-text').textContent = fmt(pClosed);
+      document.getElementById('p-last30-text').textContent = fmt(pL30);
+    })();
+  </script>
 </body>
 </html>
