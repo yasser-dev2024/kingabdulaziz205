@@ -7,147 +7,285 @@
   <title>إحالاتي</title>
   <style>
     :root{
-      --brand:#1f3c88;--brand2:#2ebfa5;--accent:#ffb703;--txt:#0f172a;--bg:#0b1020;
-      --card:#ffffff;--muted:#64748b;--ring:rgba(31,60,136,.25)
+      --brand:#1f3c88; --brand2:#2ebfa5; --accent:#ffb703;
+      --text:#0f172a; --muted:#64748b; --line:#e5e7eb;
+      --glass1: rgba(255,255,255,.22);
+      --glass2: rgba(255,255,255,.10);
+      --bg0:#ffffff; --bg1:#fbfdff; --bg2:#f7fbff;
+      --chip:#f1f5f9; --surface:#ffffff; --surface2:#f8fafc;
+      --holiday:#e11d48; --highlight:#16a34a; --today:#1d4ed8;
     }
 
-    /* خلفية تدرّجات عصرية + المؤشر الأصلي كما هو */
+    /* خلفية بيضاء مضيئة مع خطوط متقاطعة رفيعة */
     body{
-      margin:0;color:var(--txt);
+      margin:0; color:var(--text);
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Tajawal,Arial;
       background:
-        radial-gradient(1400px 700px at 80% -10%, rgba(46,191,165,.25), transparent 60%),
-        radial-gradient(1200px 600px at 10% 10%, rgba(244, 242, 242, 0.25), transparent 70%),
-        radial-gradient(800px 400px at 90% 90%, rgba(255,183,3,.18), transparent 65%),
-        linear-gradient(180deg, #0f63b6 0%, #5d6aa0 100%);
-      cursor:url("{% static 'maus.png' %}") 12 12, auto; /* لا تغيير */
+        radial-gradient(1100px 560px at 85% -15%, rgba(59,130,246,.10), transparent 60%),
+        radial-gradient(950px 600px at -10% 110%, rgba(45,212,191,.12), transparent 60%),
+        repeating-linear-gradient(45deg, rgba(15,23,42,.035) 0 1px, transparent 1px 28px),
+        repeating-linear-gradient(-45deg, rgba(15,23,42,.028) 0 1px, transparent 1px 28px),
+        linear-gradient(180deg, var(--bg0) 0%, var(--bg1) 55%, var(--bg2) 100%);
+      background-attachment: fixed,fixed,fixed,fixed,fixed;
       min-height:100dvh;
     }
-    a, button, [role="button"], .btn { cursor: inherit; }
 
-    body::before{
-      content:"";position:fixed;inset:-10% -10% auto -10%;height:40%;
-      background:radial-gradient(600px 200px at 50% 0%, rgba(46,191,165,.18), transparent 70%);
-      filter:blur(16px);pointer-events:none;z-index:-1;
-    }
+    .wrap{max-width:1100px;margin:auto;padding:22px 16px}
 
-    .wrap{max-width:1100px;margin:auto;padding:24px 16px;animation:fadeUp .6s ease both}
-    @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-
-    .head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:8px 0 18px}
-    .head h1{
-      margin:0;font-size:clamp(22px,3.2vw,30px);letter-spacing:.2px;
-      background:linear-gradient(90deg, #e2e8f0 0%, #ffffff 35%, #e2e8f0 100%);
-      -webkit-background-clip:text;background-clip:text;color:transparent;
-      text-shadow:0 1px 0 #ffffff22;
+    /* ====== الشريط الإخباري الزجاجي ====== */
+    .ticker-shell{
+      position:relative; border-radius:18px; overflow:hidden;
+      background:linear-gradient(180deg, var(--glass2), rgba(255,255,255,.04));
+      border:1px solid var(--glass1);
+      box-shadow: 0 10px 30px rgba(2,6,23,.08), inset 0 1px 0 rgba(255,255,255,.35);
+      backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
     }
-
-    .btn{
-      appearance:none;border:none;border-radius:14px;padding:12px 16px;
-      font-weight:800;text-decoration:none;display:inline-flex;align-items:center;gap:8px;
-      transition:transform .15s ease, box-shadow .15s ease, opacity .15s ease;
-      box-shadow:0 8px 20px -10px #00000080, inset 0 0 0 1px #ffffff22;
-      will-change:transform, box-shadow;
+    .ticker-track{
+      display:flex; gap:40px; padding:12px 16px; white-space:nowrap;
+      animation: ticker 22s linear infinite;
+      font-weight:700; letter-spacing:.2px; color:#0b1220;
     }
-    .btn svg{fill:currentColor}
-    .btn-primary{
-      background:linear-gradient(100deg,var(--brand) 0%, color-mix(in srgb,var(--brand2) 70%, var(--brand) 30%) 100%);
-      color:#fff;outline:0;
+    .ticker-chip{
+      padding:6px 10px; border-radius:999px;
+      background:var(--chip); border:1px solid var(--line);
+      color:var(--text); font-size:13px;
     }
-    .btn-primary:hover{transform:translateY(-1px);box-shadow:0 14px 28px -12px #ede2e299, 0 0 0 3px var(--ring)}
-    .btn-primary:active{transform:translateY(0)}
-
-    .empty{
-      position:relative;border-radius:18px;padding:26px;text-align:center;
-      color:#e2e8f0;
-      background:linear-gradient(180deg, rgba(255,255,255,.14), rgba(163, 187, 143, 0.06));
-      border:1px solid rgba(255,255,255,.22);
-      backdrop-filter:blur(10px);
-      box-shadow:0 1px 0 rgba(255,255,255,.25) inset, 0 20px 50px -20px rgba(0,0,0,.6);
-    }
-    .empty::after{
-      content:"";position:absolute;inset:-1px;pointer-events:none;border-radius:18px;
-      background:linear-gradient(180deg, rgba(255,255,255,.35), transparent 40%);
-      mask:linear-gradient(#000, transparent 50%);
+    @keyframes ticker{
+      from{ transform:translateX(0); }
+      to{ transform:translateX(-50%); }
     }
 
-    .chip{
-      display:inline-flex;align-items:center;gap:8px;margin-top:10px;
-      padding:8px 12px;border-radius:999px;border:1px dashed rgba(255,255,255,.25);
-      background:linear-gradient(180deg, rgba(237, 158, 158, 0.12), rgba(233, 208, 208, 0.06));
-      color:#cbd5e1;font-size:13px
+    /* ====== بطاقات التاريخ ====== */
+    .date-row{display:grid; gap:12px; grid-template-columns:repeat(2,minmax(0,1fr)); margin:16px 0}
+    @media(max-width:700px){ .date-row{grid-template-columns:1fr} }
+    .date-card{
+      background:var(--surface); border:1px solid var(--line); border-radius:16px;
+      padding:14px; box-shadow:0 10px 30px rgba(2,6,23,.06), 0 2px 8px rgba(2,6,23,.04);
+      display:flex; align-items:center; justify-content:space-between; gap:12px;
+    }
+    .date-card h3{margin:0 0 6px 0; font-size:16px}
+    .date-badge{
+      padding:8px 12px; border-radius:12px; background:var(--chip); border:1px solid var(--line); font-weight:800
     }
 
-    /* عنصر المتابعة: صورة تتبع حركة الماوس (لا تؤثر على التفاعل) */
-    #mouseFollower{
-      position:fixed;left:0;top:0;z-index:9999;
-      width:24px;height:24px;object-fit:contain;
-      pointer-events:none; /* لا يمنع النقر */
-      filter:drop-shadow(0 1px 2px rgba(0,0,0,.35));
-      transform:translate3d(-100px,-100px,0); /* يبدأ خارج الشاشة */
-    }
-    /* إخفاؤه في الأجهزة اللمسية */
-    @media (pointer:coarse){ #mouseFollower{ display:none; } }
+    /* ====== التقويم ====== */
+    .cal-wrap{margin-top:12px}
+    .cal-head{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:10px}
+    .cal-title{margin:0; font-size:18px}
+    .cal-nav{display:flex; gap:8px}
+    .btn{appearance:none; border:1px solid var(--line); background:#fff; color:var(--text);
+         border-radius:12px; padding:8px 12px; font-weight:700; cursor:pointer}
+    .btn:disabled{opacity:.5; cursor:default}
 
-    @media (prefers-reduced-motion: reduce){
-      .btn{transition:none}
-      .wrap{animation:none}
+    .cal{background:var(--surface); border:1px solid var(--line); border-radius:16px; overflow:hidden}
+    .cal-grid{display:grid; grid-template-columns:repeat(7,1fr)}
+    .cal-dow, .cal-day{padding:10px 8px; text-align:center; border-bottom:1px solid #eef2f7}
+    .cal-dow{background:var(--surface2); font-weight:800; color:var(--muted)}
+    .cal-day{min-height:64px; position:relative}
+    .cal-day .g{font-weight:700}
+    .cal-day .h{font-size:11px; color:var(--muted)}
+    .cal-day.today{outline:2px solid var(--today); outline-offset:-2px; border-radius:6px}
+    .cal-day.holiday{background:linear-gradient(180deg, rgba(225,29,72,.10), rgba(225,29,72,.04))}
+    .cal-day .tag{
+      position:absolute; inset:auto 6px 6px auto; font-size:10px;
+      background:#fff; border:1px solid var(--line); border-radius:999px; padding:2px 6px
     }
+
+    .legend{display:flex; gap:10px; flex-wrap:wrap; margin-top:10px}
+    .legend .lg{display:flex; align-items:center; gap:6px; font-size:12px; color:var(--muted)}
+    .legend .dot{width:10px; height:10px; border-radius:3px}
+    .dot-holiday{background:rgba(225,29,72,.6)}
+    .dot-today{background:rgba(29,78,216,.7)}
   </style>
 </head>
 <body>
   {% include 'header.html' %}
 
-  <!-- صورة تتبع الماوس -->
-  <img id="mouseFollower" src="{% static 'maus.png' %}" alt="">
-
   <div class="wrap">
-    <div class="head">
-      <h1>نظام داخلي خاص</h1>
-      <a class="btn btn-primary" href="/referrals/new/">
-        <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true"><path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2z"/></svg>
-        إنشاء إحالة
-      </a>
-    </div>
 
-    <div class="empty" role="status" aria-live="polite">
-      لا توجد إحالات لعرضها حالياً.
-      <div class="chip" aria-hidden="true">
-        <svg width="14" height="14" viewBox="0 0 24 24"><path d="M12 2a9 9 0 1 1-9 9A9 9 0 0 1 12 2m1 5h-2v6h6v-2h-4z"/></svg>
-        انظم إلينا الآن لأننا نسعى نحو التطور
+    <!-- ===== الشريط الإخباري الزجاجي (نص من الإدمن عبر متغير القالب) ===== -->
+    <section class="ticker-shell" aria-label="الشريط الإخباري">
+      <div class="ticker-track">
+        <span class="ticker-chip">تنبيه</span>
+        <span>{{ ticker_text|default:"مرحبا بكم في نظام الإحالات — يمكن للإدارة تحديث هذا الشريط من لوحة التحكم." }}</span>
+
+        <!-- نسخة مكررة لضمان الدوران السلس -->
+        <span class="ticker-chip">تنبيه</span>
+        <span>{{ ticker_text|default:"مرحبا بكم في نظام الإحالات — يمكن للإدارة تحديث هذا الشريط من لوحة التحكم." }}</span>
       </div>
-    </div>
+    </section>
+
+    <!-- ===== بطاقات التاريخ (اليوم ميلادي وهجري) ===== -->
+    <section class="date-row" aria-label="تاريخ اليوم">
+      <div class="date-card">
+        <div>
+          <h3>تاريخ اليوم (ميلادي)</h3>
+          <div id="greg-txt" class="muted">—</div>
+        </div>
+        <div id="greg-badge" class="date-badge">—</div>
+      </div>
+      <div class="date-card">
+        <div>
+          <h3>تاريخ اليوم (هجري)</h3>
+          <div id="hijri-txt" class="muted">—</div>
+        </div>
+        <div id="hijri-badge" class="date-badge">—</div>
+      </div>
+    </section>
+
+    <!-- ===== التقويم السنوي القابل للتصفح ===== -->
+    <section class="cal-wrap" aria-label="التقويم">
+      <div class="cal-head">
+        <h3 id="cal-title" class="cal-title">التقويم</h3>
+        <div class="cal-nav">
+          <button id="prev-month" class="btn" type="button">◀ الشهر السابق</button>
+          <button id="today-month" class="btn" type="button">اليوم</button>
+          <button id="next-month" class="btn" type="button">الشهر التالي ▶</button>
+        </div>
+      </div>
+
+      <div class="cal">
+        <div class="cal-grid" id="cal-grid-dow"></div>
+        <div class="cal-grid" id="cal-grid-days"></div>
+      </div>
+
+      <div class="legend">
+        <div class="lg"><span class="dot dot-today"></span> اليوم</div>
+        <div class="lg"><span class="dot dot-holiday"></span> إجازة/مناسبة سعودية</div>
+      </div>
+    </section>
+
   </div>
 
   {% include 'footer.html' %}
 
-  <!-- سكربت خفيف لتحريك الصورة مع الماوس بتحديث مدمج مع requestAnimationFrame -->
   <script>
-    (function () {
-      const el = document.getElementById('mouseFollower');
-      if (!el) return;
+    // ======= تاريخ اليوم (ميلادي/هجري) =======
+    (function setDates(){
+      const now = new Date();
 
-      let mx = -100, my = -100;   // موقع الماوس
-      let fx = -100, fy = -100;   // موقع العنصر (مُنعّم)
-      let raf = null;
+      const gFmt = new Intl.DateTimeFormat('ar-SA', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+      const hFmtTxt = new Intl.DateTimeFormat('ar-SA-u-ca-islamic', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+      const gBadge = new Intl.DateTimeFormat('en-GB', {day:'2-digit', month:'2-digit', year:'numeric'});
+      const hBadge = new Intl.DateTimeFormat('en-TN-u-ca-islamic', {day:'2-digit', month:'2-digit', year:'numeric'});
 
-      function onMove(e) {
-        mx = e.clientX;
-        my = e.clientY;
-        if (!raf) raf = requestAnimationFrame(tick);
+      document.getElementById('greg-txt').textContent = gFmt.format(now);
+      document.getElementById('hijri-txt').textContent = hFmtTxt.format(now);
+      document.getElementById('greg-badge').textContent = gBadge.format(now);
+      document.getElementById('hijri-badge').textContent = hBadge.format(now);
+    })();
+
+    // ======= بناء التقويم =======
+    (function calendar(){
+      const dow = ['الأحد','الإثنين','الثلاثاء','الأربعاء','الخميس','الجمعة','السبت'];
+      const gridDow = document.getElementById('cal-grid-dow');
+      dow.forEach(d => {
+        const el = document.createElement('div');
+        el.className = 'cal-dow';
+        el.textContent = d;
+        gridDow.appendChild(el);
+      });
+
+      const gridDays = document.getElementById('cal-grid-days');
+      const titleEl = document.getElementById('cal-title');
+      const btnPrev = document.getElementById('prev-month');
+      const btnNext = document.getElementById('next-month');
+      const btnToday = document.getElementById('today-month');
+
+      let view = new Date(); // الشهر المعروض
+
+      const hPair = (d) => {
+        // يعيد [شهر هجري رقمي (1..12), يوم هجري]
+        const parts = new Intl.DateTimeFormat('en-TN-u-ca-islamic', {month:'numeric', day:'numeric'}).formatToParts(d);
+        const m = +parts.find(p=>p.type==='month').value;
+        const day = +parts.find(p=>p.type==='day').value;
+        return [m, day];
+      };
+
+      function isSaudiHoliday(date){
+        // ثوابت Gregorian
+        const m = date.getMonth()+1, d = date.getDate();
+        if (m===2 && d===22) return 'يوم التأسيس';
+        if (m===9 && d===23) return 'اليوم الوطني';
+
+        // Hijri: عيد الفطر 1–4 شوال (10)، يوم عرفة 9 ذي الحجة (12)، عيد الأضحى 10–13 ذي الحجة
+        const [hm, hd] = hPair(date);
+        if (hm===10 && hd>=1 && hd<=4) return 'عيد الفطر';
+        if (hm===12 && hd===9) return 'يوم عرفة';
+        if (hm===12 && hd>=10 && hd<=13) return 'عيد الأضحى';
+
+        return null;
       }
 
-      function tick() {
-        // تخفيف الحركة (lerp)
-        fx += (mx - fx) * 0.2;
-        fy += (my - fy) * 0.2;
+      const monthTitle = (d) =>
+        new Intl.DateTimeFormat('ar-SA', {month:'long', year:'numeric'}).format(d);
 
-        // طرح نصف الحجم ليكون مركز الصورة عند المؤشر
-        el.style.transform = 'translate3d(' + (fx - 12) + 'px,' + (fy - 12) + 'px,0)';
-        raf = requestAnimationFrame(tick);
+      function render(){
+        // عنوان
+        titleEl.textContent = 'التقويم – ' + monthTitle(view);
+
+        // تفريغ
+        gridDays.innerHTML = '';
+
+        // أول يوم في الشهر
+        const y = view.getFullYear(), m = view.getMonth();
+        const first = new Date(y, m, 1);
+        const startIdx = first.getDay(); // 0..6 (الأحد=0 في هذه الواجهة)
+        const daysInMonth = new Date(y, m+1, 0).getDate();
+
+        // حشو قبل بداية الشهر
+        for (let i=0;i<startIdx;i++){
+          const pad = document.createElement('div');
+          pad.className = 'cal-day';
+          gridDays.appendChild(pad);
+        }
+
+        // أيام الشهر
+        const today = new Date(); today.setHours(0,0,0,0);
+        for (let d=1; d<=daysInMonth; d++){
+          const cur = new Date(y, m, d);
+          const cell = document.createElement('div');
+          cell.className = 'cal-day';
+
+          // اليوم
+          const gSpan = document.createElement('div');
+          gSpan.className = 'g';
+          gSpan.textContent = d;
+
+          // هجري صغير
+          const [hm, hd] = hPair(cur);
+          const hSpan = document.createElement('div');
+          hSpan.className = 'h';
+          hSpan.textContent = hd + ' هـ';
+
+          cell.appendChild(gSpan);
+          cell.appendChild(hSpan);
+
+          // تمييز اليوم الحالي
+          const cur0 = new Date(cur); cur0.setHours(0,0,0,0);
+          if (+cur0 === +today) cell.classList.add('today');
+
+          // الإجازات/المناسبات
+          const reason = isSaudiHoliday(cur);
+          if (reason){
+            cell.classList.add('holiday');
+            const tag = document.createElement('div');
+            tag.className = 'tag';
+            tag.textContent = reason;
+            cell.appendChild(tag);
+          }
+
+          gridDays.appendChild(cell);
+        }
       }
 
-      window.addEventListener('mousemove', onMove, { passive: true });
+      // تنقل
+      btnPrev.addEventListener('click', ()=>{ view.setMonth(view.getMonth()-1); render(); });
+      btnNext.addEventListener('click', ()=>{ view.setMonth(view.getMonth()+1); render(); });
+      btnToday.addEventListener('click', ()=>{ view = new Date(); render(); });
+
+      // بداية
+      render();
     })();
   </script>
 </body>
