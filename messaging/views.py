@@ -5,12 +5,10 @@ from django.http import HttpResponseForbidden
 from django.db.models import Q
 from django.utils import timezone
 
-# تجنّب التداخل مع اسم app "messages"
-from django.contrib import messages as dj_messages
-
+# لا نستخدم django.contrib.messages لتفادي الالتباس مع app messaging
 from accounts.models import Profile
 
-# نحاول اكتشاف اسم نموذج المراسلة في مشروعك
+# ————— محاولة استيراد نموذج الرسالة (Message/Thread/Conversation) —————
 try:
     from .models import Message as Msg
 except Exception:
@@ -20,7 +18,7 @@ except Exception:
         from .models import Conversation as Msg
 
 
-# ---------------------- Helpers ----------------------
+# ===================== Helpers =====================
 
 def _is_manager(user):
     """مدير المدرسة = is_staff أو ملفه الشخصي role == 'مدير المدرسة'."""
@@ -30,90 +28,183 @@ def _is_manager(user):
         return bool(user.is_staff)
 
 
-def _field_name(model, candidates):
-    """اختر أول اسم حقل موجود فعلياً من قائمة مرشّحة."""
-    names = {f.name for f in model._meta.get_fields()}
+def _field_names(model):
+    try:
+        return {f.name for f in model._meta.get_fields()}
+    except Exception:
+        return set()
+
+
+def _get_field(model, name):
+    try:
+        return model._meta.get_field(name)
+    except Exception:
+        return None
+
+
+def _pick_one(model, candidates, default=None):
+    """اختر أول اسم حقل موجود من قائمة مرشحّة."""
+    names = _field_names(model)
     for c in candidates:
         if c in names:
             return c
-    return candidates[0]
-
-
-# أسماء الحقول الشائعة
-SENDER_F    = _field_name(Msg, ["sender", "from_user", "author", "created_by"])
-RECIPIENT_F = _field_name(Msg, ["recipient", "to_user", "target", "receiver", "assigned_to"])
-CREATED_F   = _field_name(Msg, ["created_at", "created", "timestamp", "created_on", "sent_at"])
-
-# المقروء/غير المقروء (اختياري)
-names_set = {f.name for f in Msg._meta.get_fields()}
-READ_AT_F = "recipient_read_at" if "recipient_read_at" in names_set else ("read_at" if "read_at" in names_set else None)
-IS_READ_F = "is_read" if "is_read" in names_set else ("read" if "read" in names_set else None)
+    return default
 
 
 def _fk_id(obj, name):
-    """يرجّع المعرف من FK سواء كان name أو name_id."""
+    """يرجع المعرّف من FK سواء كان name أو name_id."""
+    if not name:
+        return None
     if hasattr(obj, f"{name}_id"):
         return getattr(obj, f"{name}_id")
     val = getattr(obj, name, None)
     return getattr(val, "id", None)
 
 
-def _msg_can_view(user, obj):
-    """المدير يرى الكل، وغير المدير: المرسل أو المستلم فقط."""
+# ——— تحديد الحقول على نموذج الرسالة ———
+MSG_AUTHOR_F = _pick_one(Msg, ["author", "sender", "from_user", "created_by", "user"])
+MSG_CREATED_F = _pick_one(Msg, ["created_at", "created", "timestamp", "created_on", "sent_at", "updated_at"], default="id")
+MSG_THREAD_F = _pick_one(Msg, ["thread", "conversation", "parent", "topic"])
+
+# ——— نموذج الـ Thread المرتبط ———
+ThreadModel = None
+if MSG_THREAD_F:
+    fld = _get_field(Msg, MSG_THREAD_F)
+    if fld is not None and hasattr(fld, "remote_field") and fld.remote_field:
+        ThreadModel = fld.remote_field.model
+
+# مرشّحات حقول المستخدم على الـ Thread (FKs)
+THREAD_USER_FKS = [
+    "recipient", "to_user", "target", "receiver", "assigned_to", "assignee",
+    "owner", "created_by", "user", "counselor", "teacher",
+]
+
+# مرشّحات علاقات M2M على الـ Thread (مجموعات مشاركين)
+THREAD_M2M_USER = [
+    "participants", "members", "users", "watchers", "involved",
+]
+
+# حقول المقروء المحتملة على الرسالة
+MSG_READ_AT_F = _pick_one(Msg, ["recipient_read_at", "read_at", "seen_at"])
+MSG_IS_READ_F = _pick_one(Msg, ["is_read", "read", "seen"])
+
+
+def _thread_user_Q(user):
+    """
+    يبني Q لمطابقة الرسائل التي ينتمي موضوعها (Thread) للمستخدم عبر
+    أي FK أو M2M متاح فعليًا على الـ Thread.
+    """
+    if not (ThreadModel and MSG_THREAD_F):
+        return Q()  # لا شيء نضيفه
+
+    thread_names = _field_names(ThreadModel)
+    q = Q()
+
+    # FKs
+    for name in THREAD_USER_FKS:
+        if name in thread_names:
+            q |= Q(**{f"{MSG_THREAD_F}__{name}": user})
+
+    # M2M
+    for name in THREAD_M2M_USER:
+        if name in thread_names:
+            # في Django: filter(field=user) يعمل لكل من FK و M2M
+            q |= Q(**{f"{MSG_THREAD_F}__{name}": user})
+
+    return q
+
+
+def _message_visible_by(user, obj):
+    """يتحقق من قابلية رؤية رسالة واحدة."""
     if _is_manager(user):
         return True
-    return _fk_id(obj, SENDER_F) == user.id or _fk_id(obj, RECIPIENT_F) == user.id
+    # مؤلف الرسالة؟
+    if MSG_AUTHOR_F and _fk_id(obj, MSG_AUTHOR_F) == user.id:
+        return True
+    # عضو في الـ Thread؟
+    if ThreadModel and MSG_THREAD_F:
+        # نبني فحصًا سريعًا ضد الحقول الشائعة
+        t = getattr(obj, MSG_THREAD_F, None)
+        if t:
+            names = _field_names(ThreadModel)
+            for n in THREAD_USER_FKS:
+                if n in names and _fk_id(t, n) == user.id:
+                    return True
+            for n in THREAD_M2M_USER:
+                if n in names:
+                    try:
+                        m2m = getattr(t, n)
+                        if m2m.filter(id=user.id).exists():
+                            return True
+                    except Exception:
+                        pass
+    return False
 
 
-def _mark_read_if_recipient(obj, user):
-    """علّم الرسالة مقروءة فقط إن كان الزائر هو المستلم الحقيقي."""
-    if _fk_id(obj, RECIPIENT_F) != user.id:
-        return
-    updated = []
-    if READ_AT_F and getattr(obj, READ_AT_F, None) in (None, False):
-        setattr(obj, READ_AT_F, timezone.now())
-        updated.append(READ_AT_F)
-    if IS_READ_F is not None:
-        cur = getattr(obj, IS_READ_F, None)
-        if cur is None or (isinstance(cur, bool) and not cur):
-            setattr(obj, IS_READ_F, True)
-            updated.append(IS_READ_F)
-    if updated:
-        obj.save(update_fields=list(set(updated)))
+def _mark_read_for_viewer(obj, user):
+    """
+    تعليم الرسالة كمقروءة بشكل تحفظي:
+    - نحدّث فقط إذا لم يكن القارئ هو المؤلف (غالبًا هو المستلم/الطرف الآخر).
+    - لا نفعل شيئًا إن لم توجد حقول مقروء.
+    """
+    try:
+        if MSG_AUTHOR_F and _fk_id(obj, MSG_AUTHOR_F) == user.id:
+            return  # الكاتب نفسه، لا نغيّر
+        updated = []
+        if MSG_READ_AT_F and getattr(obj, MSG_READ_AT_F, None) in (None, False):
+            setattr(obj, MSG_READ_AT_F, timezone.now())
+            updated.append(MSG_READ_AT_F)
+        if MSG_IS_READ_F is not None:
+            cur = getattr(obj, MSG_IS_READ_F, None)
+            if cur is None or (isinstance(cur, bool) and not cur):
+                setattr(obj, MSG_IS_READ_F, True)
+                updated.append(MSG_IS_READ_F)
+        if updated:
+            obj.save(update_fields=list(set(updated)))
+    except Exception:
+        # لا نكسر الصفحة لو فشل الحفظ
+        pass
 
 
-# ---------------------- Views (الأسماء المطلوبة من urls.py) ----------------------
+# ===================== Views =====================
 
 @login_required
 def inbox(request):
     """
     قائمة المراسلات:
-      - المدير يرى جميع المراسلات.
-      - غير المدير يرى ما أرسله أو استقبله.
-    نرجع المتغير 'items' (توافقاً مع قوالبك).
-    يدعم scope = all|sent|inbox إن وُجد في الروابط.
+      - المدير يرى جميع الرسائل.
+      - غير المدير يرى رسائله المؤلّفة + أي رسالة ضمن Thread يشارك فيه.
+    يحافظ على نفس اسم السياق: items, scope, counts.
     """
-    qs = Msg.objects.all().order_by(f"-{CREATED_F}")
+    qs = Msg.objects.all().order_by(f"-{MSG_CREATED_F}")
 
-    # تحسين select_related لعلاقتي المرسل/المستلم إن وُجدت
+    # select_related لتحسين الأداء على الحقول الموجودة
     to_select = []
-    for f in (SENDER_F, RECIPIENT_F):
-        try:
-            if Msg._meta.get_field(f).is_relation:
-                to_select.append(f)
-        except Exception:
-            pass
+    for name in (MSG_AUTHOR_F, MSG_THREAD_F):
+        f = _get_field(Msg, name) if name else None
+        if f is not None and getattr(f, "is_relation", False) and not getattr(f, "many_to_many", False):
+            to_select.append(name)
     if to_select:
         qs = qs.select_related(*to_select)
 
     if _is_manager(request.user):
         qs_all = qs
-        qs_sent = qs
+        qs_sent = qs if not MSG_AUTHOR_F else qs.filter(**{MSG_AUTHOR_F: request.user})
+        # "inbox" للمدير = كل شيء
         qs_inbox = qs
     else:
-        qs_sent = qs.filter(**{SENDER_F: request.user})
-        qs_inbox = qs.filter(**{RECIPIENT_F: request.user})
-        qs_all = qs.filter(Q(**{SENDER_F: request.user}) | Q(**{RECIPIENT_F: request.user}))
+        q_threads = _thread_user_Q(request.user)
+        q_auth = Q()
+        if MSG_AUTHOR_F:
+            q_auth = Q(**{MSG_AUTHOR_F: request.user})
+
+        qs_all = qs.filter(q_threads | q_auth)
+        qs_sent = qs.filter(q_auth) if MSG_AUTHOR_F else qs.none()
+        # الوارد = ما في الـ Thread للمستخدم وليس من كتابته (إن توفّر حقل المؤلف)
+        if MSG_AUTHOR_F:
+            qs_inbox = qs.filter(q_threads).exclude(**{MSG_AUTHOR_F: request.user})
+        else:
+            qs_inbox = qs.filter(q_threads)
 
     scope = request.GET.get("scope", "all")
     if scope == "sent":
@@ -131,23 +222,25 @@ def inbox(request):
         "inbox": qs_inbox.count(),
     }
 
-    # خريطة مبسطة للاستفادة بها في القالب إن رغبت
+    # خريطة مبسطة للمقروء/غير المقروء
     read_map = {}
     for m in items:
+        # غير المقروء إذا وُجد حقل ويدل على ذلك
         unread = False
-        if READ_AT_F:
-            unread = (getattr(m, READ_AT_F, None) is None)
-        elif IS_READ_F:
-            unread = not bool(getattr(m, IS_READ_F, False))
+        if MSG_READ_AT_F:
+            unread = (getattr(m, MSG_READ_AT_F, None) is None)
+        elif MSG_IS_READ_F:
+            unread = not bool(getattr(m, MSG_IS_READ_F, False))
 
-        if _fk_id(m, SENDER_F) == request.user.id:
+        # اتجاه الرسالة بالنسبة للمستخدم (اختياري للقالب)
+        if MSG_AUTHOR_F and _fk_id(m, MSG_AUTHOR_F) == request.user.id:
             d = "out"
-        elif _fk_id(m, RECIPIENT_F) == request.user.id:
-            d = "in"
+        elif _is_manager(request.user):
+            d = "mgr"
         else:
-            d = "mgr"  # يظهر فقط للمدير
+            d = "in"
 
-        read_map[m.pk] = {"unread_for_recipient": unread, "dir": d}
+        read_map[getattr(m, "pk", None)] = {"unread": unread, "dir": d}
 
     return render(request, "messaging/index.html", {
         "items": items,
@@ -158,7 +251,7 @@ def inbox(request):
     })
 
 
-# اسم بديل إن كانت هناك مسارات تستدعي index بدلاً من inbox
+# اسم بديل لو كانت الروابط القديمة تستخدم index بدل inbox
 @login_required
 def index(request):
     return inbox(request)
@@ -167,48 +260,42 @@ def index(request):
 @login_required
 def thread_detail(request, pk: int):
     """
-    تفاصيل المراسلة:
-      - المدير يمكنه فتح أي مراسلة.
-      - نحدّث المقروء فقط للمستلم الحقيقي.
-    نعيد المتغير 't' حفاظاً على توافق القالب.
+    تفاصيل رسالة واحدة:
+      - المدير يمكنه عرض أي رسالة.
+      - نعلّم “مقروء” للمشاهد إذا لم يكن المؤلف نفسه.
     """
     obj = get_object_or_404(Msg.objects.all(), pk=pk)
-    if not _msg_can_view(request.user, obj):
+    if not _message_visible_by(request.user, obj):
         return HttpResponseForbidden("لا تملك صلاحية عرض هذه المراسلة.")
-    _mark_read_if_recipient(obj, request.user)
+    _mark_read_for_viewer(obj, request.user)
     return render(request, "messaging/detail.html", {
         "t": obj,
         "is_manager": _is_manager(request.user),
     })
 
 
-# اسم بديل إن كان القالب أو الروابط تستخدم detail
+# اسم بديل لو كانت الروابط تستخدم detail
 @login_required
 def detail(request, pk: int):
     return thread_detail(request, pk)
 
 
-# الغلافات التالية فقط للحفاظ على أسماء مستوردة في urls.py بدون تغيير هيكلك.
-# لم نعدّل إنشاء/رد/إغلاق لأن طلبك كان عرض جميع المراسلات للمدير فقط.
-
+# نحافظ على الأسماء التي يستوردها urls.py بدون العبث بمنطقك الحالي لإنشاء/رد/إغلاق
 @login_required
 def new_thread(request):
-    # نعرض القالب كما هو إن وُجد، بدون تغيير المنطق لديك.
-    # إن كانت لديك معالجة POST موجودة في مكان آخر فلن نمسّها.
     try:
         return render(request, "messaging/new.html", {})
     except Exception:
-        # لا نكسر المشروع إن لم يوجد القالب
         return inbox(request)
 
 
 @login_required
 def reply_thread(request, pk: int):
-    # نعيد التوجيه لتفاصيل الرسالة للحفاظ على التدفق دون كسر المسارات.
+    # إعادة استخدام تفاصيل الرسالة للحفاظ على المسارات
     return thread_detail(request, pk)
 
 
 @login_required
 def close_thread(request, pk: int):
-    # نعيد عرض التفاصيل لتجنّب كسر المسارات القديمة.
+    # إعادة استخدام التفاصيل، ولا نمس منطقك الأصلي
     return thread_detail(request, pk)
