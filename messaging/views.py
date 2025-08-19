@@ -4,6 +4,7 @@ from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponseForbidden
 from django.db.models import Q
 from django.utils import timezone
+from django.contrib.auth.models import User  # ✅ لإحضار المستخدمين النشطين
 
 # لا نستخدم django.contrib.messages لتفادي الالتباس مع app messaging
 from accounts.models import Profile
@@ -283,8 +284,27 @@ def detail(request, pk: int):
 # نحافظ على الأسماء التي يستوردها urls.py بدون العبث بمنطقك الحالي لإنشاء/رد/إغلاق
 @login_required
 def new_thread(request):
+    """
+    صفحة إنشاء مراسلة:
+    - لا نغيّر منطق الإنشاء لديك.
+    - فقط نمرّر قائمة المستخدمين النشطين للقالب لإظهارها في خانة (إلى المستخدم).
+    """
+    recipients_qs = (
+        User.objects.filter(is_active=True)
+        .exclude(id=request.user.id)
+        .select_related("profile")
+        .order_by("profile__full_name", "username")
+    )
+
+    ctx = {
+        # نمرّرها بعدة أسماء لضمان التوافق مع أي قالب موجود لديك
+        "users": recipients_qs,
+        "recipients": recipients_qs,
+        "all_users": recipients_qs,
+        "receivers": recipients_qs,
+    }
     try:
-        return render(request, "messaging/new.html", {})
+        return render(request, "messaging/new.html", ctx)
     except Exception:
         return inbox(request)
 
