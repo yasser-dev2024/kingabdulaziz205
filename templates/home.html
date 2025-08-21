@@ -162,6 +162,24 @@
     .dot-today{background:rgba(29,78,216,.7)}
 
     .cal-wrap-original[hidden]{display:none !important}
+
+    /* ====== Responsiveness ====== */
+    @media (max-width:768px){
+      .wrap{padding:12px 10px}
+      .ticker-track{font-size:13px; animation-duration:18s}
+      .btn-pill{padding:8px 12px; font-size:14px}
+      .mini-date{padding:8px 10px; gap:6px}
+      .num{font-size:22px}
+      .meta .line1{font-size:12px}
+      .meta .line2{font-size:10px}
+      .panel{width:95vw}
+    }
+    @media (max-width:480px){
+      .btn-pill{font-size:13px; padding:7px 10px}
+      .mini-date{flex:1; justify-content:center}
+      .actions-bar{flex-direction:column; align-items:stretch}
+      .top-actions{flex-wrap:wrap; justify-content:center}
+    }
   </style>
 </head>
 <body>
@@ -275,6 +293,9 @@
   <script>
     // ======= أدوات مساعدة =======
     const pad2 = v => (v<10? '0'+v : ''+v);
+    // نستخدم تقويم أم القرى للهجري لضبط اليوم بدقة داخل السعودية
+    const HIJRI_PARTS_LOCALE = 'en-TN-u-ca-islamic-umalqura';
+    const HIJRI_AR_LOCALE = 'ar-SA-u-ca-islamic-umalqura';
 
     // ======= بطاقات التاريخ (بالصيغ المطلوبة) =======
     (function setMiniDates(){
@@ -300,17 +321,20 @@
       document.getElementById('g-line1').textContent    = gLine1;
       document.getElementById('g-line2').textContent    = gLine2;
 
-      /* === Hijri === */
-      const hParts = new Intl.DateTimeFormat('en-TN-u-ca-islamic', {weekday:'long', year:'numeric', month:'numeric', day:'numeric'}).formatToParts(now);
+      /* === Hijri (أم القرى) === */
+      const hParts = new Intl.DateTimeFormat(
+        HIJRI_PARTS_LOCALE,
+        {weekday:'long', year:'numeric', month:'numeric', day:'numeric'}
+      ).formatToParts(now);
       const hp = Object.fromEntries(hParts.map(p=>[p.type,p.value]));
       const hYear = +hp.year, hMonth = +hp.month, hDay = +hp.day;
 
-      const hWeekName  = new Intl.DateTimeFormat('ar-SA-u-ca-islamic', {weekday:'long'}).format(now); // الأحد
-      const hMonthName = new Intl.DateTimeFormat('ar-SA-u-ca-islamic', {month:'long'}).format(now);   // صفر
+      const hWeekName  = new Intl.DateTimeFormat(HIJRI_AR_LOCALE, {weekday:'long'}).format(now); // مثال: الخميس
+      const hMonthName = new Intl.DateTimeFormat(HIJRI_AR_LOCALE, {month:'long'}).format(now);   // مثال: صفر
 
-      const hLine1 = `${hWeekName} ${hDay}${hMonthName} ${hYear}`; // الاحد 23صفر 1447
-      const hLine2 = `${hYear}/${hMonth}/${hDay}`;                 // 1447/2/23
-      const hBig   = new Intl.DateTimeFormat('ar-SA-u-ca-islamic', {day:'numeric'}).format(now);
+      const hLine1 = `${hWeekName} ${hDay} ${hMonthName} ${hYear}`; // الخميس 27 صفر 1447
+      const hLine2 = `${hYear}/${hMonth}/${hDay}`;                  // 1447/2/27
+      const hBig   = new Intl.DateTimeFormat(HIJRI_AR_LOCALE, {day:'numeric'}).format(now);
 
       document.getElementById('h-mini-big').textContent = hBig;
       document.getElementById('h-line1').textContent    = hLine1;
@@ -366,7 +390,7 @@
       let view = new Date();
 
       const hPair = (d) => {
-        const parts = new Intl.DateTimeFormat('en-TN-u-ca-islamic', {month:'numeric', day:'numeric'}).formatToParts(d);
+        const parts = new Intl.DateTimeFormat(HIJRI_PARTS_LOCALE, {month:'numeric', day:'numeric'}).formatToParts(d);
         const m = +parts.find(p=>p.type==='month').value;
         const day = +parts.find(p=>p.type==='day').value;
         return [m, day];
