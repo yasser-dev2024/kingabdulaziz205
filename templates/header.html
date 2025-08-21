@@ -9,10 +9,10 @@
       background:url('/static/king.png') center/cover no-repeat;
       position:relative;overflow:visible;z-index:1;
       /* فراغ بسيط أسفل البنر لعدم تداخل الشعار الدائري */
-      padding-bottom:78px;
+      padding-bottom:90px;
     }
 
-    /* الشريط العلوي الصغير (اختياري) */
+    /* الشريط العلوي الصغير (أُزيل المحتوى الخاص بنظام الإحالات) */
     .hdr-top{
       max-width:1200px;margin:auto;
       display:flex;align-items:center;justify-content:space-between;gap:16px;
@@ -28,25 +28,25 @@
 
     /* الروابط فوق البنر (بدون شريط) */
     .hdr-actions{
-      position:absolute;right:30;left:0;bottom:250px; /* أسفل البنر */
+      position:absolute;right:50;left:0;bottom:195px; /* أسفل البنر */
       z-index:4;
     }
     .hdr-actions-wrap{
-      max-width:1200px;margin:auto;
-      display:flex;align-items:center;justify-content:space-between;gap:180px;
+      max-width:999px;margin:auto;
+      display:flex;align-items:center;justify-content:flex-start;gap:10px;
       padding:0 19px;
     }
 
-    /* مجموعة الروابط يمين */
-    .hdr-links{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    /* مجموعة الروابط */
+    .hdr-links{display:flex;align-items:center;gap:5px;flex-wrap:wrap}
 
     /* زر زجاجي بإطار قوي */
     .hdr-link{
-      --ring: rgba(255,255,255,.6);
-      --bg1: rgba(237, 4, 4, 0.12);
-      --bg2: rgba(182, 253, 4, 0.06);
+      --ring: rgba(246, 246, 244, 0.6);
+      --bg1: rgba(68, 8, 250, 0.12);
+      --bg2: rgba(179, 248, 7, 0.06);
       color:#ffffff;text-decoration:none;font-weight:700;
-      padding:10px 16px;border-radius:14px;
+      padding:10px 16px;border-radius:29px;
       background:linear-gradient(180deg,var(--bg1),var(--bg2));
       border:1.5px solid var(--ring);
       box-shadow:
@@ -77,28 +77,12 @@
 
   <!-- البنر بالصورة -->
   <div class="hdr-banner">
-    <!-- شعار/عنوان صغير أعلى البنر (اختياري للنقر على الرئيسية) -->
-    <div class="hdr-top">
-      <a class="hdr-brand" href="/" aria-label="الرئيسية">
-        <span class="hdr-logo" aria-hidden="true">
-          <svg viewBox="0 0 24 24"><path d="M5 12a7 7 0 1 1 14 0v4a3 3 0 0 1-3 3h-1a1 1 0 0 1-1-1v-5h-4v5a1 1 0 0 1-1 1H8a3 3 0 0 1-3-3v-4z"/></svg>
-        </span>
-        <span class="hdr-title">نظام الإحالات</span>
-      </a>
-      <div></div>
-    </div>
+    <!-- أُزيل رابط/عنوان "نظام الإحالات" وشعاره من أعلى البنر -->
 
     <!-- الروابط: فوق البنر مباشرة، بدون خلفية شريط -->
     <div class="hdr-actions">
       <div class="hdr-actions-wrap">
-        <!-- يسار: الشعار/العنوان كرابط رئيسية (يبقى كما هو) -->
-        <a class="hdr-brand" href="/" aria-label="الرئيسية" style="text-decoration:none">
-          <span class="hdr-logo" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><path d="M5 12a7 7 0 1 1 14 0v4a3 3 0 0 1-3 3h-1a1 1 0 0 1-1-1v-5h-4v5a1 1 0 0 1-1 1H8a3 3 0 0 1-3-3v-4z"/></svg>
-          </span>
-        </a>
-
-        <!-- يمين: الروابط نفسها بدون أي تغيير في المسارات -->
+        <!-- تُركت روابط التنقل كما هي تمامًا -->
         <div class="hdr-links">
           <a class="hdr-link" href="/">الرئيسية</a>
           <a class="hdr-link" href="/referrals/">إحالاتي</a>
