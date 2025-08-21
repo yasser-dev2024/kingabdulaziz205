@@ -42,7 +42,7 @@
         {% csrf_token %}
 
         <div class="row">
-          <label for="username">اسم المستخدم</label>
+          <label for="username">اسم المستخدم أو الاسم المختصر</label>
           <input id="username" name="username" value="{{ form.username|default_if_none:'' }}" required autocomplete="username">
           {% if errors.username %}<div class="err">{{ errors.username }}</div>{% endif %}
         </div>
