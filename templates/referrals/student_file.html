@@ -1,63 +1,110 @@
+{% load static %}
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>سجل الطالب {{ student_name }}</title>
+  <title>سجل الطالب</title>
   <style>
-    .sf-container{max-width:1200px;margin:24px auto;padding:0 12px}
-    .sf-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
-    @media(max-width:900px){.sf-grid{grid-template-columns:1fr}}
-    .card{background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:12px}
-    .stack>*+*{margin-top:10px}
-    .muted{color:#6b7280}
-    .btn{display:inline-block;padding:8px 12px;border-radius:10px;border:0;background:#eef2ff;color:#111;text-decoration:none}
-    .btn-primary{background:#2563eb;color:#fff}
-    .btn-secondary{background:#6b7280;color:#fff}
-    .badge{background:#eef2ff;color:#1f2937;border-radius:999px;padding:4px 10px;font-size:12px}
-    .title{display:flex;align-items:center;gap:8px;margin:0 0 8px 0}
-    .btns-row{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap}
+    :root{
+      --brand:#1f3c88; --brand2:#2ebfa5; --accent:#ffb703;
+      --text:#0f172a; --muted:#64748b; --line:#e5e7eb;
+      --bg0:#ffffff; --bg1:#fbfdff; --bg2:#f7fbff;
+      --surface:#ffffff; --surface2:#f8fafc;
+      --chip:#f1f5f9;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;background:var(--bg2);color:var(--text)}
+    .container{max-width:1200px;margin:24px auto;padding:0 12px}
+    .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+    .title{font-size:20px;font-weight:700;color:var(--brand)}
+    .sub{font-size:14px;color:var(--muted)}
+    .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 28px rgba(2,6,23,.06);overflow:hidden}
+    .section{padding:14px 16px}
+    .divider{height:1px;background:var(--line);margin:8px 0}
+    .badge{display:inline-flex;align-items:center;gap:6px;background:var(--chip);padding:6px 10px;border-radius:999px;font-size:12px;color:#0f172a}
+    .grid{display:grid;gap:12px}
+    .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+    @media (max-width:900px){.grid-3{grid-template-columns:1fr}.grid-2{grid-template-columns:1fr}}
+    .pill{display:inline-block;background:#eef2ff;color:#1f2937;border:1px solid #e5e7eb;border-radius:999px;padding:6px 10px;font-size:12px}
+    .k{color:#334155;font-weight:600}
+    .v{color:#0f172a}
+    .group{border:1px solid var(--line);border-radius:14px;background:#fff}
+    .group-h{padding:12px 14px;background:linear-gradient(90deg,#06b6d4,#6366f1);color:#fff;font-weight:700}
+    .row{display:flex;justify-content:space-between;gap:10px;padding:10px 14px;border-top:1px solid var(--line)}
+    .row:first-child{border-top:0}
+    .muted{color:var(--muted)}
+    .ref-list{display:flex;flex-direction:column;gap:10px}
+    .ref-item{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fff}
+    .ref-top{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+    .chips{display:flex;flex-wrap:wrap;gap:6px}
+    .empty{padding:18px;text-align:center;color:var(--muted)}
+    a.btn{display:inline-flex;align-items:center;gap:8px;text-decoration:none;background:#2563eb;color:#fff;padding:10px 14px;border-radius:10px}
+    .btn-light{background:#eef2ff;color:#1f2937}
   </style>
 </head>
 <body>
-<div class="sf-container">
+  <div class="container">
+    <div class="header">
+      <div>
+        <div class="title">سجل الطالب</div>
+        <div class="sub">{{ student_name }} {% if key %}<span class="pill">المعرّف: {{ key }}</span>{% endif %}</div>
+      </div>
+      <div class="chips">
+        <a class="btn btn-light" href="{% url 'referrals:index' %}">عودة إلى الإحالات</a>
+      </div>
+    </div>
 
-  <div class="card">
-    <h2 class="title">
-      <span class="badge">سجل الطالب</span>
-      <span>{{ student_name }}</span>
-    </h2>
-    <div class="btns-row">
-      <a href="{% url 'referrals:list' %}" class="btn btn-primary">العودة للرئيسية</a>
-      <a href="javascript:history.back()" class="btn btn-secondary">العودة للخلف</a>
+    <div class="card">
+      <div class="section">
+        <div class="badge">عدد الإحالات: {{ items|length }}</div>
+      </div>
+      <div class="divider"></div>
+
+      {% if items %}
+        <div class="section">
+          <div class="ref-list">
+            {% for r in items %}
+              <div class="ref-item">
+                <div class="ref-top">
+                  <div class="chips">
+                    <span class="pill">#{{ r.pk }}</span>
+                    <span class="pill">المرجع: {{ r.reference }}</span>
+                    <span class="pill">النوع: {{ r.get_referral_type_display }}</span>
+                    <span class="pill">الصف: {{ r.get_grade_display }}</span>
+                    <span class="pill">الحالة: {{ r.get_status_display }}</span>
+                    <span class="pill">أُنشئت: {{ r.created_at|date:"Y-m-d H:i" }}</span>
+                  </div>
+                  <a class="btn" href="{% url 'referrals:detail' r.pk %}">تفاصيل الإحالة</a>
+                </div>
+
+                {% if HAS_COUNSELOR %}
+                  {% if r.counselor_summary and r.counselor_summary|length %}
+                    <div class="group" style="margin-top:12px">
+                      <div class="group-h">ملخص بيانات الموجّه</div>
+                      {% for g in r.counselor_summary %}
+                        <div class="row" style="background:#fafafa;font-weight:700">{{ g.title }}</div>
+                        {% for it in g.items %}
+                          <div class="row">
+                            <div class="k">{{ it.0 }}</div>
+                            <div class="v">{{ it.1 }}</div>
+                          </div>
+                        {% endfor %}
+                      {% endfor %}
+                    </div>
+                  {% else %}
+                    <div class="empty">لا توجد بيانات موجّه لهذه الإحالة حتى الآن.</div>
+                  {% endif %}
+                {% endif %}
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      {% else %}
+        <div class="section empty">لا توجد إحالات مرتبطة بهذا الطالب.</div>
+      {% endif %}
     </div>
   </div>
-
-  {% if items %}
-    <div class="sf-grid" style="margin-top:16px">
-      {% for r in items %}
-        <div class="card stack">
-          <div class="title"><span class="badge">#{{ r.pk }}</span> <strong>إحالة</strong></div>
-          <div><strong>التاريخ:</strong> {{ r.created_at|date:"Y-m-d H:i" }}</div>
-          <div><strong>الحالة:</strong> {{ r.get_status_display|default:r.status }}</div>
-          <div><strong>النوع:</strong> {{ r.get_referral_type_display|default:r.referral_type }}</div>
-          <div class="muted">{{ r.details|truncatechars:160 }}</div>
-          <div>
-            <a class="btn" href="{% url 'referrals:detail' r.pk %}">فتح التفاصيل</a>
-          </div>
-
-          {% if r.counselor_summary %}
-            <div>
-              {% include "referrals/_counselor_summary.html" with groups=r.counselor_summary %}
-            </div>
-          {% endif %}
-        </div>
-      {% endfor %}
-    </div>
-  {% else %}
-    <div class="card" style="margin-top:16px"><div class="muted">لا توجد إحالات لهذا الطالب.</div></div>
-  {% endif %}
-
-</div>
 </body>
 </html>

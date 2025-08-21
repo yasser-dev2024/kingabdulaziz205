@@ -1,3 +1,4 @@
+# referrals/views.py
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.auth.models import User
@@ -37,8 +38,19 @@ MAX_FILES = 5
 def _ctx(form=None, errors=None):
     return {"form": form or {}, "errors": errors or {}, "grades": Referral.GRADE_CHOICES, "types": Referral.TYPE_CHOICES}
 
+def _is_manager(user):
+    """
+    مدير المدرسة يمتلك صلاحيات كاملة.
+    التعريف: user.is_staff أو دوره في الملف الشخصي "مدير المدرسة".
+    """
+    try:
+        return bool(user.is_staff or (getattr(user, "profile", None) and user.profile.role == "مدير المدرسة"))
+    except Profile.DoesNotExist:
+        return bool(user.is_staff)
+
 def _can_view(user, ref: Referral):
-    return user.is_staff or user == ref.created_by or (ref.assignee and user == ref.assignee)
+    # المدير أو المشرف يرى كل شيء، وإلا منشئ الإحالة أو المكلّف بها
+    return _is_manager(user) or user == ref.created_by or (ref.assignee and user == ref.assignee)
 
 def _is_counselor(user):
     try:
@@ -47,7 +59,8 @@ def _is_counselor(user):
         return False
 
 def _can_assign(user, ref: Referral):
-    return (user.is_staff or user == ref.created_by or _is_counselor(user) or (ref.assignee_id == user.id))
+    # السماح للمدير/المشرف بالإضافة لمنشئ الإحالة والموجّه والمكلّف الحالي
+    return (_is_manager(user) or user.is_staff or user == ref.created_by or _is_counselor(user) or (ref.assignee_id == user.id))
 
 def _ensure_student_key(ref: Referral):
     try:
@@ -170,14 +183,24 @@ def _counselor_summary_struct(intake):
 @login_required
 def list_referrals(request: HttpRequest):
     scope = request.GET.get("scope", "all")
-    sent_qs = Referral.objects.filter(created_by=request.user)
-    inbox_qs = Referral.objects.filter(assignee=request.user)
+
+    # المدير يشاهد كل الإحالات
+    if _is_manager(request.user):
+        sent_qs = Referral.objects.all()
+        inbox_qs = Referral.objects.all()
+        base_qs = Referral.objects.all()
+    else:
+        sent_qs = Referral.objects.filter(created_by=request.user)
+        inbox_qs = Referral.objects.filter(assignee=request.user)
+        base_qs = Referral.objects.filter(Q(created_by=request.user) | Q(assignee=request.user))
+
     if scope == "sent":
         items_qs = sent_qs
     elif scope == "inbox":
         items_qs = inbox_qs
     else:
-        items_qs = Referral.objects.filter(Q(created_by=request.user) | Q(assignee=request.user))
+        items_qs = base_qs
+
     items_qs = items_qs.select_related("created_by", "assignee").order_by("-created_at")
     items = list(items_qs)
     for r in items: _ensure_student_key(r)
@@ -192,8 +215,11 @@ def list_referrals(request: HttpRequest):
         if r.created_at > g["latest"]: g["latest"] = r.created_at
         if r.created_at >= g["latest"]: g["student_name"] = r.student_name
     groups = sorted(groups_map.values(), key=lambda x: x["latest"], reverse=True)
-    counts = {"all": Referral.objects.filter(Q(created_by=request.user) | Q(assignee=request.user)).count(),
-              "sent": sent_qs.count(), "inbox": inbox_qs.count()}
+    counts = {
+        "all": base_qs.count(),
+        "sent": sent_qs.count(),
+        "inbox": inbox_qs.count()
+    }
     return render(request, "referrals/index.html", {"items": items, "groups": groups, "counts": counts, "scope": scope})
 
 # ——— إنشاء إحالة ———
@@ -278,7 +304,13 @@ def detail_referral(request, pk: int):
     actions = (Action.objects.filter(referral=ref).select_related("author").prefetch_related("files").order_by("created_at"))
     is_counselor = _is_counselor(request.user)
 
-    same_student_qs = Referral.objects.filter(Q(created_by=request.user) | Q(assignee=request.user)).exclude(pk=ref.pk).order_by("-created_at")
+    # المدير يرى كذلك "نفس الطالب" دون تقييد بمنشئ/مكلّف
+    base_same_qs = Referral.objects.exclude(pk=ref.pk).order_by("-created_at")
+    if _is_manager(request.user):
+        same_student_qs = base_same_qs
+    else:
+        same_student_qs = base_same_qs.filter(Q(created_by=request.user) | Q(assignee=request.user))
+
     same_student = []
     for r in same_student_qs:
         _ensure_student_key(r)
@@ -295,7 +327,7 @@ def detail_referral(request, pk: int):
             intake = getattr(ref, "counselor_intake", None)
         except Exception:
             intake = None
-        # 👇 هنا التعديل: كل من يملك صلاحية عرض الإحالة يرى الملخص
+        # كل من يملك صلاحية عرض الإحالة يرى الملخص (بما فيهم المدير)
         can_view_counselor_summary = _can_view(request.user, ref)
         if intake and can_view_counselor_summary:
             counselor_summary = _counselor_summary_struct(intake)
@@ -400,7 +432,7 @@ def counselor_intake_view(request, pk: int):
     if not HAS_COUNSELOR:
         return HttpResponseForbidden("هذه الصفحة غير مفعّلة (نموذج الموجّه غير مُثبت).")
     ref = get_object_or_404(Referral, pk=pk)
-    if not (_is_counselor(request.user) or request.user.is_staff or ref.assignee_id == request.user.id):
+    if not (_is_counselor(request.user) or _is_manager(request.user) or request.user.is_staff or ref.assignee_id == request.user.id):
         return HttpResponseForbidden("هذه الصفحة للموجّه/المشرف/المكلّف فقط.")
 
     intake, _ = CounselorIntake.objects.get_or_create(referral=ref, defaults={
@@ -567,7 +599,12 @@ def counselor_intake_view(request, pk: int):
 # ——— ملف الطالب ———
 @login_required
 def student_file(request, key: str):
-    visible_qs = Referral.objects.filter(Q(created_by=request.user) | Q(assignee=request.user)).order_by("-created_at")
+    # المدير يرى جميع الإحالات للطالب
+    if _is_manager(request.user):
+        visible_qs = Referral.objects.all().order_by("-created_at")
+    else:
+        visible_qs = Referral.objects.filter(Q(created_by=request.user) | Q(assignee=request.user)).order_by("-created_at")
+
     visible = list(visible_qs)
     for r in visible: _ensure_student_key(r)
     items = [r for r in visible if getattr(r, "student_key", "") == key]
