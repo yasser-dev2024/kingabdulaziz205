@@ -8,6 +8,8 @@ from django.utils.translation import gettext as _
 from django.http import HttpResponseForbidden, HttpRequest, HttpResponse
 from django.db.models import Q
 from django.template import loader, TemplateDoesNotExist, engines
+from django.utils import timezone
+from datetime import timedelta
 import unicodedata, re
 
 from accounts.models import Profile
@@ -203,7 +205,33 @@ def list_referrals(request: HttpRequest):
 
     items_qs = items_qs.select_related("created_by", "assignee").order_by("-created_at")
     items = list(items_qs)
-    for r in items: _ensure_student_key(r)
+    for r in items:
+        _ensure_student_key(r)
+
+    # ===== تمييز الإحالات الواردة الجديدة لهذا المستخدم =====
+    # نستخدم جلسة المستخدم لحفظ آخر وقت زيارة لقائمة الإحالات
+    now = timezone.now()
+    recent_window = now - timedelta(days=3)  # نافذة أمان مبدئية عند غياب قيمة مخزنة
+    try:
+        last_seen_iso = request.session.get("referrals_last_seen")
+        last_seen = timezone.datetime.fromisoformat(last_seen_iso) if last_seen_iso else None
+        if last_seen and timezone.is_naive(last_seen):
+            last_seen = timezone.make_aware(last_seen, timezone=timezone.get_current_timezone())
+    except Exception:
+        last_seen = None
+
+    for r in items:
+        r.is_new_incoming = (
+            (r.assignee_id == request.user.id) and                   # واردة لي
+            (r.created_by_id != request.user.id) and                 # لم أقم أنا بإنشائها
+            ((last_seen and r.created_at > last_seen) or             # أحدث من آخر زيارة
+             (not last_seen and r.created_at >= recent_window))      # أو ضمن آخر 3 أيام كافتراضي
+        )
+
+    # حدّث وقت آخر زيارة
+    request.session["referrals_last_seen"] = now.isoformat()
+
+    # تجميع حسب الطالب (كما هو)
     groups_map = {}
     for r in items:
         key = getattr(r, "student_key", "") or f"ref-{r.pk}"
@@ -212,9 +240,12 @@ def list_referrals(request: HttpRequest):
             g = {"key": getattr(r, "student_key", "") or "", "student_name": r.student_name, "latest": r.created_at, "referrals": []}
             groups_map[key] = g
         g["referrals"].append(r)
-        if r.created_at > g["latest"]: g["latest"] = r.created_at
-        if r.created_at >= g["latest"]: g["student_name"] = r.student_name
+        if r.created_at > g["latest"]:
+            g["latest"] = r.created_at
+        if r.created_at >= g["latest"]:
+            g["student_name"] = r.student_name
     groups = sorted(groups_map.values(), key=lambda x: x["latest"], reverse=True)
+
     counts = {
         "all": base_qs.count(),
         "sent": sent_qs.count(),
@@ -273,8 +304,10 @@ def create_referral(request):
             ref.student_key = make_student_key(student_name, student_civil_id)
             updated_fields.append("student_key")
         if updated_fields:
-            try: ref.save(update_fields=updated_fields)
-            except Exception: pass
+            try:
+                ref.save(update_fields=updated_fields)
+            except Exception:
+                pass
 
         for f in checked_files:
             Attachment.objects.create(referral=ref, file=f, uploaded_by=request.user)
@@ -316,7 +349,8 @@ def detail_referral(request, pk: int):
         _ensure_student_key(r)
         if getattr(ref, "student_key", "") and getattr(r, "student_key", "") and r.student_key == ref.student_key:
             same_student.append(r)
-        if len(same_student) >= 10: break
+        if len(same_student) >= 10:
+            break
 
     files = getattr(ref, "attachments", Attachment.objects.none()).all()
 
@@ -606,7 +640,8 @@ def student_file(request, key: str):
         visible_qs = Referral.objects.filter(Q(created_by=request.user) | Q(assignee=request.user)).order_by("-created_at")
 
     visible = list(visible_qs)
-    for r in visible: _ensure_student_key(r)
+    for r in visible:
+        _ensure_student_key(r)
     items = [r for r in visible if getattr(r, "student_key", "") == key]
     student_name = items[0].student_name if items else ""
 

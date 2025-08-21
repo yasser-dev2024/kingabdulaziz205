@@ -1,16 +1,18 @@
 # messaging/views.py
+from datetime import timedelta
+
 from django.contrib.auth.decorators import login_required
-from django.shortcuts import render, get_object_or_404, redirect
-from django.http import HttpResponseForbidden, HttpRequest
-from django.db.models import Q, Max
-from django.utils import timezone
 from django.contrib.auth.models import User
+from django.db.models import Q, Max
+from django.http import HttpRequest, HttpResponseForbidden
+from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 
 # لا نستخدم django.contrib.messages هنا حتى لا يحصل تعارض اسم مع التطبيق
 from accounts.models import Profile
 
 # موديلات التطبيق (بدون تغيير هيكل/أسماء)
-from .models import Thread, Message, MessageAttachment
+from .models import Message, MessageAttachment, Thread
 
 
 # ===================== Helpers =====================
@@ -98,7 +100,7 @@ def inbox(request: HttpRequest):
       - المدير يرى جميع المواضيع (Threads).
       - غير المدير يرى المواضيع التي هو طرفٌ فيها (مرسل/مستلم).
     يتم ترتيب القائمة فعليًا حسب أحدث رسالة داخل كل موضوع (حتى تظهر الرسائل الحديثة فورًا).
-    لا نغيّر القوالب أو المسارات: items = قائمة المواضيع، read_map للاتجاه/المقروء.
+    نمرّر read_map وتوابع على الكائن نفسه لتسهيل إبراز العناصر الجديدة باللون الأحمر.
     """
     # المواضيع المرئية للمستخدم
     if _is_manager(request.user):
@@ -128,7 +130,7 @@ def inbox(request: HttpRequest):
         for m in Message.objects.filter(id__in=list(last_msg_ids)).select_related("author", "thread")
     }
 
-    # رتب المواضيع حسب تاريخ آخر رسالة (إن وُجدت) وإلا حسب updated_at ثم created_at
+    # رتب المواضيع حسب id آخر رسالة (أكثر دقة من updated_at)
     items = list(threads_scoped)
     items.sort(
         key=lambda t: (
@@ -138,20 +140,46 @@ def inbox(request: HttpRequest):
         )
     )
 
-    # خرائط للمقروء/اتجاه الرسالة بالنسبة للمستخدم
+    # نافذة اعتبار "جديد"
+    now = timezone.now()
+    recent_window = now - timedelta(days=3)
+
+    # خرائط للمقروء/اتجاه الرسالة والجديد + حقن خصائص على الكائن لتعمل مع أي قالب
     read_map = {}
     for t in items:
         lm = last_msgs.get(t.id)
         unread = False
+        is_new_incoming = False
         if lm:
-            unread = lm.author_id != request.user.id
+            # غير مقروء = آخر رسالة ليست مني
+            unread = (lm.author_id != request.user.id)
+            # جديد وارد = آخر رسالة ليست مني ومؤرخة حديثًا
+            is_new_incoming = unread and (lm.created_at >= recent_window)
+
+        # اتجاه بالنسبة للمستخدم
         if t.sender_id == request.user.id:
             d = "out"
         elif _is_manager(request.user):
             d = "mgr"
         else:
             d = "in"
-        read_map[t.id] = {"unread": unread, "dir": d, "last": lm}
+
+        # حفظ في الخريطة
+        read_map[t.id] = {
+            "unread": unread,
+            "dir": d,
+            "last": lm,
+            "is_new_incoming": is_new_incoming,
+            "css": "is-new-card" if is_new_incoming else "",
+            "mark": "●" if is_new_incoming else "",
+        }
+
+        # ← كذلك نضيف خصائص على نفس الموضوع حتى تعمل مع أي قالب لا يقرأ read_map
+        setattr(t, "last_message", lm)
+        setattr(t, "is_unread", unread)
+        setattr(t, "is_new_incoming", is_new_incoming)   # استعملها القالب لتلوين العنصر بالأحمر
+        setattr(t, "new_mark", "●" if is_new_incoming else "")
+        setattr(t, "dir", d)
 
     counts = {
         "all": threads_base.count(),

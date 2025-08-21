@@ -48,9 +48,14 @@
           <label for="grade">الصف</label>
           <select id="grade" name="grade" required>
             <option value="">— اختر الصف —</option>
-            {% for val,label in grades %}
-              <option value="{{ val }}" {% if form.grade == val %}selected{% endif %}>{{ label }}</option>
-            {% endfor %}
+            {% with g=form.grade|stringformat:"s" %}
+              <option value="1" {% if g == '1' %}selected{% endif %}>الأول الابتدائي</option>
+              <option value="2" {% if g == '2' %}selected{% endif %}>الثاني الإبتدائي</option>
+              <option value="3" {% if g == '3' %}selected{% endif %}>الثالث  الإبتدائي</option>
+              <option value="4" {% if g == '4' %}selected{% endif %}>الرابع  الإبتدائي</option>
+              <option value="5" {% if g == '5' %}selected{% endif %}>الخامس  الإبتدائي</option>
+              <option value="6" {% if g == '6' %}selected{% endif %}>السادس  الإبتدائي</option>
+            {% endwith %}
           </select>
           {% if errors.grade %}<div class="err">{{ errors.grade }}</div>{% endif %}
         </div>
