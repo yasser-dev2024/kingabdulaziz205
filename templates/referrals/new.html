@@ -2,114 +2,123 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>إنشاء إحالة</title>
-  <style>
-    :root{--brand:#1f3c88;--brand2:#2ebfa5;--accent:#ffb703;--txt:#0f172a;--bg:#f8fafc}
-    body{margin:0;background:var(--bg);font-family:system-ui,-apple-system,Segoe UI,Roboto,Tajawal,Arial;color:var(--txt)}
-    .wrap{max-width:1100px;margin:auto;padding:18px 16px}
-    .card{background:#fff;border:1px solid rgba(0,0,0,.08);border-radius:18px;padding:16px}
-    .title{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-    .title h1{margin:0;font-size:clamp(20px,3vw,26px)}
-    form{display:grid;gap:12px}
-    .row{display:grid;gap:6px}
-    label{font-weight:700}
-    input,select,textarea{padding:12px;border:1px solid rgba(0,0,0,.16);border-radius:12px;background:#fff}
-    textarea{min-height:120px;resize:vertical}
-    .err{color:#b91c1c;font-size:13px}
-    .btn{appearance:none;border:none;border-radius:14px;padding:12px 16px;font-weight:800;cursor:pointer}
-    .btn-primary{background:linear-gradient(100deg,var(--brand) 0%, color-mix(in srgb,var(--brand2) 70%, var(--brand) 30%) 100%);color:#fff}
-    .hint{color:#64748b;font-size:13px}
-    .files{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
-    .pill{border:1px dashed rgba(0,0,0,.18);padding:6px 10px;border-radius:999px;font-size:12px;background:#fff}
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>إنشاء إحالة</title>
+<style>
+  body{margin:0;font-family:system-ui,Tajawal,Arial;background:#f6f7fb;color:#0f172a}
+  .wrap{max-width:1100px;margin:auto;padding:18px 14px}
+  .card{background:#fff;border:1px solid #e5e7eb;border-radius:18px;box-shadow:0 10px 26px rgba(2,6,23,.06);overflow:hidden}
+  .head{padding:14px 16px;background:linear-gradient(90deg,#06b6d4,#6366f1);color:#fff;font-weight:900;display:flex;align-items:center;justify-content:space-between}
+  .body{padding:16px}
+  .grid{display:grid;gap:12px}
+  .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+  @media(max-width:900px){.grid-2{grid-template-columns:1fr}}
+  label{display:block;margin:6px 0 6px;font-weight:800;color:#334155}
+  input[type="text"],select,textarea{width:100%;padding:10px 12px;border:1px solid #e5e7eb;border-radius:12px;background:#fff}
+  textarea{min-height:140px}
+  .hint{font-size:12px;color:#64748b;margin-top:6px}
+  .err{color:#b91c1c;font-size:12px;font-weight:800}
+  .row{margin-bottom:6px}
+  .actions{display:flex;gap:10px;margin-top:12px}
+  .btn{appearance:none;border:1px solid #e5e7eb;border-radius:12px;padding:10px 14px;cursor:pointer;font-weight:900}
+  .btn-primary{background:linear-gradient(90deg,#06b6d4,#4f46e5);color:#fff;border-color:transparent}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+  .chip{padding:6px 10px;border-radius:999px;background:#f1f5f9;border:1px solid #e5e7eb;font-weight:700}
+</style>
 </head>
 <body>
-  {% include 'header.html' %}
-  <div class="wrap">
-    <div class="card">
-      <div class="title"><h1>إنشاء إحالة</h1></div>
-
-      {% if messages %}
-        {% for m in messages %}
-          <div class="pill" role="status">{{ m }}</div>
-        {% endfor %}
-      {% endif %}
-
+{% include 'header.html' %}
+<div class="wrap">
+  <div class="card">
+    <div class="head">
+      <span>إنشاء إحالة</span>
+      <div class="chips">
+        <span class="chip">حد الملفات: 5</span>
+        <span class="chip">10MB لكل ملف</span>
+      </div>
+    </div>
+    <div class="body">
       <form method="post" enctype="multipart/form-data" novalidate>
         {% csrf_token %}
+
         <div class="row">
-          <label for="student_name">اسم الطالب</label>
-          <input id="student_name" name="student_name" value="{{ form.student_name|default_if_none:'' }}" required>
+          <label>اسم الطالب</label>
+          <input type="text" name="student_name" value="{{ form.student_name|default_if_none:'' }}">
           {% if errors.student_name %}<div class="err">{{ errors.student_name }}</div>{% endif %}
         </div>
 
-        <div class="row">
-          <label for="grade">الصف</label>
-          <select id="grade" name="grade" required>
-            <option value="">— اختر الصف —</option>
-            {% with g=form.grade|stringformat:"s" %}
-              <option value="1" {% if g == '1' %}selected{% endif %}>الأول الابتدائي</option>
-              <option value="2" {% if g == '2' %}selected{% endif %}>الثاني الإبتدائي</option>
-              <option value="3" {% if g == '3' %}selected{% endif %}>الثالث  الإبتدائي</option>
-              <option value="4" {% if g == '4' %}selected{% endif %}>الرابع  الإبتدائي</option>
-              <option value="5" {% if g == '5' %}selected{% endif %}>الخامس  الإبتدائي</option>
-              <option value="6" {% if g == '6' %}selected{% endif %}>السادس  الإبتدائي</option>
-            {% endwith %}
-          </select>
-          {% if errors.grade %}<div class="err">{{ errors.grade }}</div>{% endif %}
+        <div class="grid grid-2">
+          <div class="row">
+            <label>الصف</label>
+            <select name="grade">
+              <option value="">— اختر الصف —</option>
+              <option value="1" {% if form.grade == "1" %}selected{% endif %}>الأول الإبتدائي</option>
+              <option value="2" {% if form.grade == "2" %}selected{% endif %}>الثاني الإبتدائي</option>
+              <option value="3" {% if form.grade == "3" %}selected{% endif %}>الثالث الإبتدائي</option>
+              <option value="4" {% if form.grade == "4" %}selected{% endif %}>الرابع الإبتدائي</option>
+              <option value="5" {% if form.grade == "5" %}selected{% endif %}>الخامس الإبتدائي</option>
+              <option value="6" {% if form.grade == "6" %}selected{% endif %}>السادس الإبتدائي</option>
+            </select>
+            {% if errors.grade %}<div class="err">{{ errors.grade }}</div>{% endif %}
+          </div>
+
+          <div class="row">
+            <label>نوع الإحالة</label>
+            <select name="referral_type">
+              <option value="">— اختر النوع —</option>
+              {% for val,label in types %}
+                <option value="{{ val }}" {% if form.referral_type == val %}selected{% endif %}>{{ label }}</option>
+              {% endfor %}
+            </select>
+            {% if errors.referral_type %}<div class="err">{{ errors.referral_type }}</div>{% endif %}
+          </div>
         </div>
 
         <div class="row">
-          <label for="referral_type">نوع الإحالة</label>
-          <select id="referral_type" name="referral_type" required>
-            <option value="">— اختر النوع —</option>
-            {% for val,label in types %}
-              <option value="{{ val }}" {% if form.referral_type == val %}selected{% endif %}>{{ label }}</option>
-            {% endfor %}
-          </select>
-          {% if errors.referral_type %}<div class="err">{{ errors.referral_type }}</div>{% endif %}
-        </div>
-
-        <div class="row">
-          <label for="details">التفاصيل</label>
-          <textarea id="details" name="details" required>{{ form.details|default_if_none:'' }}</textarea>
+          <label>التفاصيل</label>
+          <textarea name="details">{{ form.details|default_if_none:'' }}</textarea>
+          <div class="hint">الرجاء إدخال تفاصيل كافية (10 أحرف على الأقل).</div>
           {% if errors.details %}<div class="err">{{ errors.details }}</div>{% endif %}
-          <div class="hint">رجاءً اكتب وصفًا واضحًا ومختصرًا.</div>
+        </div>
+
+        <div class="grid grid-2">
+          <div class="row">
+            <label>السجل المدني (اختياري)</label>
+            <input type="text" name="student_civil_id" value="{{ form.student_civil_id|default_if_none:'' }}">
+          </div>
+
+          <!-- إرسال الإحالة إلى -->
+          <div class="row">
+            <label>إرسال الإحالة إلى</label>
+            <select name="assignee">
+              <option value="">— لا أحد (تحويل تلقائي إن لزم) —</option>
+              {% if users %}
+                {% for u in users %}
+                  <option value="{{ u.id }}" {% if selected_assignee|stringformat:'s' == u.id|stringformat:'s' %}selected{% endif %}>
+                    {{ u.get_full_name|default:u.username }}
+                  </option>
+                {% endfor %}
+              {% endif %}
+            </select>
+            {% if errors.assignee %}<div class="err">{{ errors.assignee }}</div>{% endif %}
+          </div>
         </div>
 
         <div class="row">
-          <label for="attachments">المرفقات (اختياري — حتى 5 ملفات، 10MB لكل ملف)</label>
-          <input id="attachments" name="attachments" type="file" multiple accept=".pdf,.png,.jpg,.jpeg,.doc,.docx">
+          <label>المرفقات (اختياري — حتى 5 ملفات، 10MB لكل ملف)</label>
+          <input type="file" name="attachments" multiple>
           {% if errors.attachments %}<div class="err">{{ errors.attachments }}</div>{% endif %}
-          <div id="list" class="files"></div>
         </div>
 
-        <div class="row">
+        <div class="actions">
+          <a class="btn" href="{% url 'referrals:index' %}">إلغاء</a>
           <button class="btn btn-primary" type="submit">حفظ الإحالة</button>
         </div>
       </form>
     </div>
   </div>
-  {% include 'footer.html' %}
-
-  <script>
-    // عرض أسماء الملفات المختارة
-    (function(){
-      const input = document.getElementById('attachments');
-      const list = document.getElementById('list');
-      if(input && list){
-        input.addEventListener('change', () => {
-          list.innerHTML = '';
-          [...input.files].slice(0,5).forEach(f => {
-            const el = document.createElement('span');
-            el.className = 'pill';
-            el.textContent = f.name + ' (' + Math.ceil(f.size/1024) + 'KB)';
-            list.appendChild(el);
-          });
-        });
-      }
-    })();
-  </script>
+</div>
+{% include 'footer.html' %}
 </body>
 </html>

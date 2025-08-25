@@ -211,12 +211,16 @@ def list_referrals(request: HttpRequest):
 @login_required
 @require_http_methods(["GET", "POST"])
 def create_referral(request):
+    # قائمة المستخدمين لاختيار "إرسال الإحالة إلى"
+    users_qs = User.objects.filter(is_active=True).order_by("username")
+
     if request.method == "POST":
         student_name = (request.POST.get("student_name") or "").strip()
         grade = (request.POST.get("grade") or "").strip()
         referral_type = (request.POST.get("referral_type") or "").strip()
         details = (request.POST.get("details") or "").strip()
         student_civil_id = (request.POST.get("student_civil_id") or "").strip()
+        assignee_raw = (request.POST.get("assignee") or "").strip()
         files = request.FILES.getlist("attachments")
 
         errors = {}
@@ -231,6 +235,14 @@ def create_referral(request):
         if len(files) > MAX_FILES:
             errors["attachments"] = f"يمكن رفع {MAX_FILES} ملفات كحد أقصى."
 
+        # التحقق من المرسل إليه إذا تم اختياره
+        assignee_user = None
+        if assignee_raw:
+            try:
+                assignee_user = User.objects.get(pk=int(assignee_raw), is_active=True)
+            except Exception:
+                errors["assignee"] = "المستخدم المحدد غير متاح."
+
         checked_files = []
         for f in files:
             ext = "." + f.name.split(".")[-1].lower()
@@ -243,7 +255,8 @@ def create_referral(request):
             checked_files.append(f)
 
         if errors:
-            return render(request, "referrals/new.html", _ctx(request.POST, errors))
+            ctx = {**_ctx(request.POST, errors), "users": users_qs, "selected_assignee": assignee_raw}
+            return render(request, "referrals/new.html", ctx)
 
         ref = Referral.objects.create(
             student_name=student_name, grade=grade, referral_type=referral_type,
@@ -264,18 +277,27 @@ def create_referral(request):
         for f in checked_files:
             Attachment.objects.create(referral=ref, file=f, uploaded_by=request.user)
 
-        counselor = User.objects.filter(is_active=True, profile__role="موجه طلابي").first()
-        if counselor:
-            ref.assignee = counselor
+        # إن اختار المستخدم مرسلاً إليه نعيّنه مباشرة، وإلا نستخدم السلوك السابق (الموجّه إن وُجد)
+        if assignee_user:
+            ref.assignee = assignee_user
             ref.status = "UNDER_REVIEW"
             ref.save(update_fields=["assignee", "status"])
             Action.objects.create(referral=ref, author=request.user, kind="NOTE",
-                                  content=f"تحويل تلقائي إلى الموجّه الطلابي: {counselor.username}")
+                                  content=f"تحويل تلقائي إلى {assignee_user.username}")
+        else:
+            counselor = User.objects.filter(is_active=True, profile__role="موجه طلابي").first()
+            if counselor:
+                ref.assignee = counselor
+                ref.status = "UNDER_REVIEW"
+                ref.save(update_fields=["assignee", "status"])
+                Action.objects.create(referral=ref, author=request.user, kind="NOTE",
+                                      content=f"تحويل تلقائي إلى الموجّه الطلابي: {counselor.username}")
 
         messages.success(request, _("تم إنشاء الإحالة بنجاح."))
         return redirect("referrals:detail", pk=ref.pk)
 
-    return render(request, "referrals/new.html", _ctx())
+    # GET
+    return render(request, "referrals/new.html", {**_ctx(), "users": users_qs, "selected_assignee": ""})
 
 # ——— تفاصيل ———
 @login_required
@@ -286,9 +308,12 @@ def detail_referral(request, pk: int):
     _ensure_student_key(ref)
 
     # عند فتح الإحالة من المكلّف تُعتبر مفتوحة (لأجل الوسم الأخضر بعد الرد)
-    if ref.assignee_id == request.user.id and not ref.is_opened_by_assignee:
-        ref.is_opened_by_assignee = True
-        ref.save(update_fields=["is_opened_by_assignee"])
+    if ref.assignee_id == request.user.id and not getattr(ref, "is_opened_by_assignee", False):
+        try:
+            ref.is_opened_by_assignee = True
+            ref.save(update_fields=["is_opened_by_assignee"])
+        except Exception:
+            pass
 
     assignable = User.objects.filter(is_active=True).exclude(id=request.user.id).order_by("username")
     actions = (Action.objects.filter(referral=ref).select_related("author").prefetch_related("files").order_by("created_at"))
@@ -391,11 +416,17 @@ def reply_referral(request, pk: int):
         ActionAttachment.objects.create(action=act, file=f, uploaded_by=request.user)
 
     # وسم الرد ليتحول لون البطاقة للأخضر بعد الفتح
-    if not ref.has_reply:
-        ref.has_reply = True
+    if not getattr(ref, "has_reply", False):
+        try:
+            ref.has_reply = True
+        except Exception:
+            pass
     if ref.status == "NEW":
         ref.status = "UNDER_REVIEW"
-    ref.save(update_fields=["has_reply", "status"])
+    try:
+        ref.save(update_fields=["has_reply", "status"])
+    except Exception:
+        ref.save()
 
     messages.success(request, "تم إرسال الرد.")
     return redirect("referrals:detail", pk=ref.pk)
