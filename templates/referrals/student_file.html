@@ -12,6 +12,7 @@
       --bg0:#ffffff; --bg1:#fbfdff; --bg2:#f7fbff;
       --surface:#ffffff; --surface2:#f8fafc;
       --chip:#f1f5f9;
+      --danger:#ef4444; --danger-bg:#fee2e2;
     }
     *{box-sizing:border-box}
     body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;background:var(--bg2);color:var(--text)}
@@ -42,6 +43,24 @@
     .empty{padding:18px;text-align:center;color:var(--muted)}
     a.btn{display:inline-flex;align-items:center;gap:8px;text-decoration:none;background:#2563eb;color:#fff;padding:10px 14px;border-radius:10px}
     .btn-light{background:#eef2ff;color:#1f2937}
+
+    /* ——— مستطيل اسم الطالب + تمييز الإحالة الواردة الجديدة ——— */
+    .student-box{padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px}
+    .student-name{font-weight:900;color:#0f172a}
+    .new-banner{display:inline-flex;align-items:center;gap:6px;background:var(--danger);color:#fff;font-weight:900;border-radius:999px;padding:6px 10px}
+    .new-big{margin-top:8px;font-weight:900;color:var(--danger);font-size:15px}
+
+    .pulse-red{
+      border-color:var(--danger);
+      background:linear-gradient(180deg,var(--danger-bg),#fff);
+      box-shadow:0 0 0 0 rgba(239,68,68,.45);
+      animation:pulseRed 1.6s ease-in-out infinite;
+    }
+    @keyframes pulseRed{
+      0%{box-shadow:0 0 0 0 rgba(239,68,68,.45)}
+      70%{box-shadow:0 0 0 12px rgba(239,68,68,0)}
+      100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}
+    }
   </style>
 </head>
 <body>
@@ -78,6 +97,17 @@
                   </div>
                   <a class="btn" href="{% url 'referrals:detail' r.pk %}">تفاصيل الإحالة</a>
                 </div>
+
+                <!-- مستطيل اسم الطالب + شارة "إحالة جديدة" إذا كانت واردة جديدة -->
+                <div class="student-box{% if r.is_new_incoming %} pulse-red{% endif %}">
+                  <div class="student-name">{{ r.student_name }}</div>
+                  {% if r.is_new_incoming %}
+                    <span class="new-banner">إحالة جديدة</span>
+                  {% endif %}
+                </div>
+                {% if r.is_new_incoming %}
+                  <div class="new-big">إحالة جديدة لم تُفتح بعد</div>
+                {% endif %}
 
                 {% if HAS_COUNSELOR %}
                   {% if r.counselor_summary and r.counselor_summary|length %}

@@ -35,23 +35,28 @@ class Referral(models.Model):
     ]
     GRADE_CHOICES = [(str(i), f"الصف {i}") for i in range(1, 13)]
 
-    reference = models.CharField(max_length=20, default=generate_reference, unique=True, editable=False)
+    reference = models.CharField("المرجع", max_length=20, default=generate_reference, unique=True, editable=False)
 
     # بيانات الطالب
-    student_name = models.CharField(max_length=120)
+    student_name = models.CharField("اسم الطالب", max_length=120)
     # المفتاح الموحد للطالب (يُملأ تلقائيًا من الاسم) ويُستخدم للتجميع
     student_key = models.CharField("معرّف الطالب", max_length=180, blank=True, db_index=True)
 
-    grade = models.CharField(max_length=2, choices=GRADE_CHOICES)
-    referral_type = models.CharField(max_length=20, choices=TYPE_CHOICES)
-    details = models.TextField()
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="NEW")
+    grade = models.CharField("الصف", max_length=2, choices=GRADE_CHOICES)
+    referral_type = models.CharField("نوع الإحالة", max_length=20, choices=TYPE_CHOICES)
+    details = models.TextField("التفاصيل")
+    status = models.CharField("الحالة", max_length=20, choices=STATUS_CHOICES, default="NEW")
 
-    created_by = models.ForeignKey(User, on_delete=models.CASCADE, related_name="created_referrals")
-    assignee = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="assigned_referrals")
+    created_by = models.ForeignKey(User, verbose_name="أنشأها", on_delete=models.CASCADE, related_name="created_referrals")
+    assignee = models.ForeignKey(User, verbose_name="المكلّف", on_delete=models.SET_NULL, null=True, blank=True, related_name="assigned_referrals")
 
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
+    created_at = models.DateTimeField("أُنشئت في", auto_now_add=True)
+    updated_at = models.DateTimeField("آخر تحديث", auto_now=True)
+
+    class Meta:
+        verbose_name = "إحالة"
+        verbose_name_plural = "إحالات"
+        ordering = ["-created_at"]
 
     def save(self, *args, **kwargs):
         # توليد مفتاح الطالب إن كان فارغًا
@@ -67,10 +72,15 @@ class Referral(models.Model):
         return self.pk or "tmp"
 
 class Attachment(models.Model):
-    referral = models.ForeignKey(Referral, on_delete=models.CASCADE, related_name="attachments")
-    file = models.FileField(upload_to=referral_upload_path)
-    uploaded_by = models.ForeignKey(User, on_delete=models.CASCADE)
-    uploaded_at = models.DateTimeField(auto_now_add=True)
+    referral = models.ForeignKey(Referral, verbose_name="الإحالة", on_delete=models.CASCADE, related_name="attachments")
+    file = models.FileField("الملف", upload_to=referral_upload_path)
+    uploaded_by = models.ForeignKey(User, verbose_name="تم الرفع بواسطة", on_delete=models.CASCADE)
+    uploaded_at = models.DateTimeField("تاريخ الرفع", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "مرفق إحالة"
+        verbose_name_plural = "مرفقات الإحالات"
+        ordering = ["-uploaded_at"]
 
     def __str__(self):
         return f"مرفق {self.referral.reference}"
@@ -81,24 +91,36 @@ class Action(models.Model):
         ("NOTE", "ملاحظة"),
         ("DECISION", "قرار"),
     ]
-    referral = models.ForeignKey(Referral, on_delete=models.CASCADE, related_name="actions")
-    author = models.ForeignKey(User, on_delete=models.CASCADE)
-    kind = models.CharField(max_length=12, choices=KIND_CHOICES, default="REPLY")
-    content = models.TextField(blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    referral = models.ForeignKey(Referral, verbose_name="الإحالة", on_delete=models.CASCADE, related_name="actions")
+    author = models.ForeignKey(User, verbose_name="الكاتب", on_delete=models.CASCADE)
+    kind = models.CharField("النوع", max_length=12, choices=KIND_CHOICES, default="REPLY")
+    content = models.TextField("المحتوى", blank=True)
+    created_at = models.DateTimeField("أُنشئ في", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "إجراء"
+        verbose_name_plural = "إجراءات"
+        ordering = ["created_at"]
 
     def __str__(self):
         return f"{self.get_kind_display()} - {self.referral.reference}"
 
 class ActionAttachment(models.Model):
-    action = models.ForeignKey(Action, on_delete=models.CASCADE, related_name="files")
-    file = models.FileField(upload_to=action_upload_path)
-    uploaded_by = models.ForeignKey(User, on_delete=models.CASCADE)
-    uploaded_at = models.DateTimeField(auto_now_add=True)
+    action = models.ForeignKey(Action, verbose_name="الإجراء", on_delete=models.CASCADE, related_name="files")
+    file = models.FileField("الملف", upload_to=action_upload_path)
+    uploaded_by = models.ForeignKey(User, verbose_name="تم الرفع بواسطة", on_delete=models.CASCADE)
+    uploaded_at = models.DateTimeField("تاريخ الرفع", auto_now_add=True)
+
+    class Meta:
+        verbose_name = "مرفق إجراء"
+        verbose_name_plural = "مرفقات الإجراءات"
+        ordering = ["-uploaded_at"]
 
     @property
     def action_id(self):
-        return self.action_id
+        # إرجاع معرّف الإجراء المرتبط دون تعارض مع اسم الخاصية التلقائي
+        a = getattr(self, "action", None)
+        return a.pk if a and a.pk else None
 
     def __str__(self):
         return f"مرفق إجراء {self.action_id}"
@@ -111,7 +133,7 @@ class NewsTicker(models.Model):
     is_active  = models.BooleanField("مفعل", default=True)
     starts_at  = models.DateTimeField("يبدأ من", blank=True, null=True)
     ends_at    = models.DateTimeField("ينتهي في", blank=True, null=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField("أُنشئ في", auto_now_add=True)
 
     class Meta:
         verbose_name = "شريط إخباري"
