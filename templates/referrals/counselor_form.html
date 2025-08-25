@@ -1,55 +1,171 @@
-{% extends "base.html" %}
-{% load i18n %}
-{% block content %}
-<div class="container py-3" dir="rtl">
-  <div class="row justify-content-center">
-    <div class="col-lg-9">
-      <div class="card shadow-sm">
-        <div class="card-header d-flex align-items-center justify-content-between">
-          <h5 class="mb-0">نموذج بيانات الموجّه</h5>
-          <a href="{% url 'referrals:detail' r.pk %}" class="btn btn-sm btn-outline-secondary">عودة للتفاصيل</a>
-        </div>
-        <div class="card-body">
-          <form method="post" novalidate>
-            {% csrf_token %}
-            <div class="row g-3">
-              <div class="col-md-6">
-                <label class="form-label">اسم الموجّه</label>
-                {{ form.counselor_name }}
-                {% for e in form.counselor_name.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
-              </div>
-              <div class="col-12">
-                <label class="form-label">وصف السلوك/المشكلة</label>
-                {{ form.student_behavior }}
-                {% for e in form.student_behavior.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
-              </div>
-              <div class="col-12">
-                <label class="form-label">إجراءات سابقة (اختياري)</label>
-                {{ form.previous_interventions }}
-                {% for e in form.previous_interventions.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
-              </div>
-              <div class="col-12">
-                <label class="form-label">التوصيات (اختياري)</label>
-                {{ form.recommendations }}
-                {% for e in form.recommendations.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">تاريخ المتابعة</label>
-                {{ form.follow_up_date }}
-                {% for e in form.follow_up_date.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
-              </div>
-            </div>
-            <div class="d-flex gap-2 mt-3">
-              <a href="{% url 'referrals:detail' r.pk %}" class="btn btn-light">إلغاء</a>
-              <button type="submit" class="btn btn-primary">حفظ</button>
-            </div>
-          </form>
-        </div>
+{% load static %}
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>نموذج بيانات الموجّه</title>
+<style>
+  :root{
+    --ink:#0f172a; --muted:#64748b; --line:#e5e7eb;
+    --bg:#f6f7fb; --card:#ffffff;
+    --g1:#06b6d4; --g2:#4f46e5; --ok:#16a34a; --danger:#dc2626;
+    --shadow:0 10px 28px rgba(2,6,23,.08);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,Segoe UI,Roboto,Tajawal,Arial}
+  .wrap{max-width:1100px;margin:26px auto;padding:0 14px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);overflow:hidden}
+  .head{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:14px 16px;color:#fff;
+    background:linear-gradient(90deg,var(--g1),var(--g2));
+  }
+  .head .title{display:flex;align-items:center;gap:10px;font-weight:1000}
+  .badge{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);border-radius:999px;padding:6px 10px;font-weight:900}
+  .btn{
+    appearance:none;border:1px solid var(--line);background:#fff;color:#111827;
+    border-radius:12px;padding:9px 14px;font-weight:800;text-decoration:none;cursor:pointer
+  }
+  .btn-primary{background:linear-gradient(90deg,var(--g1),var(--g2));color:#fff;border:0}
+  .btn-ghost{background:#fff}
+  .btn-danger{background:linear-gradient(90deg,#ef4444,#f97316);color:#fff;border:0}
+  .actions{display:flex;gap:10px;flex-wrap:wrap}
+
+  .section{padding:16px}
+  .section + .section{border-top:1px solid var(--line)}
+  .s-title{margin:0 0 10px 0;font-size:15px;font-weight:900;color:#1f2937}
+
+  .grid{display:grid;gap:12px}
+  .g-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .g-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+  @media(max-width:920px){.g-3{grid-template-columns:1fr}}
+  @media(max-width:720px){.g-2{grid-template-columns:1fr}}
+
+  label{display:block;margin:0 0 6px 0;font-weight:700;color:#334155;font-size:14px}
+  input[type="text"],input[type="date"],select,textarea{
+    width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:#fff
+  }
+  textarea{min-height:100px}
+  .hr{height:1px;background:#eef2f7;margin:6px 0 2px}
+
+  /* Footer actions */
+  .footer{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:14px 16px;border-top:1px solid var(--line);background:#f8fafc}
+  .hint{font-size:12.5px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <div class="head">
+      <div class="title">
+        <span class="badge">إحالة #{{ r.pk }}</span>
+        <span>نموذج بيانات الموجّه</span>
       </div>
-      <div class="text-muted small mt-2">
-        إحالة رقم {{ r.pk }}
+      <div class="actions">
+        <a href="{% url 'referrals:detail' r.pk %}" class="btn btn-ghost">إغلاق</a>
       </div>
     </div>
+
+    <form method="post" novalidate>
+      {% csrf_token %}
+
+      <div class="section">
+        <div class="grid g-3">
+          <div><label>{{ form.counselor_name.label }}</label>{{ form.counselor_name }}</div>
+          <div><label>{{ form.follow_up_date.label }}</label>{{ form.follow_up_date }}</div>
+          <div></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h4 class="s-title">المعلومات الاجتماعية/التعليمية</h4>
+        <div class="grid g-3">
+          <div><label>{{ form.father_alive.label }}</label>{{ form.father_alive }}</div>
+          <div><label>{{ form.mother_alive.label }}</label>{{ form.mother_alive }}</div>
+          <div><label>{{ form.parents_status.label }}</label>{{ form.parents_status }}</div>
+
+          <div><label>{{ form.siblings_count.label }}</label>{{ form.siblings_count }}</div>
+          <div><label>{{ form.birth_order.label }}</label>{{ form.birth_order }}</div>
+          <div></div>
+
+          <div><label>{{ form.father_education.label }}</label>{{ form.father_education }}</div>
+          <div><label>{{ form.mother_education.label }}</label>{{ form.mother_education }}</div>
+          <div></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h4 class="s-title">المعلومات الاقتصادية</h4>
+        <div class="grid g-3">
+          <div><label>{{ form.father_job.label }}</label>{{ form.father_job }}</div>
+          <div><label>{{ form.mother_job.label }}</label>{{ form.mother_job }}</div>
+          <div><label>{{ form.family_income.label }}</label>{{ form.family_income }}</div>
+
+          <div><label>{{ form.receives_social_support.label }}</label>{{ form.receives_social_support }}</div>
+          <div><label>{{ form.house_ownership.label }}</label>{{ form.house_ownership }}</div>
+          <div><label>{{ form.gets_everything_easily.label }}</label>{{ form.gets_everything_easily }}</div>
+
+          <div><label>{{ form.house_type.label }}</label>{{ form.house_type }}</div>
+          <div><label>{{ form.house_type_other.label }}</label>{{ form.house_type_other }}</div>
+          <div></div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h4 class="s-title">المعلومات الصحية</h4>
+        <div class="grid g-3">
+          <div><label>{{ form.disease_heart.label }}</label>{{ form.disease_heart }}</div>
+          <div><label>{{ form.disease_pressure.label }}</label>{{ form.disease_pressure }}</div>
+          <div><label>{{ form.disease_kidney.label }}</label>{{ form.disease_kidney }}</div>
+          <div><label>{{ form.disease_sleep.label }}</label>{{ form.disease_sleep }}</div>
+          <div><label>{{ form.disease_vision.label }}</label>{{ form.disease_vision }}</div>
+          <div><label>{{ form.disease_other.label }}</label>{{ form.disease_other }}</div>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="grid g-3">
+          <div><label>{{ form.cond_asthma.label }}</label>{{ form.cond_asthma }}</div>
+          <div><label>{{ form.cond_diabetes.label }}</label>{{ form.cond_diabetes }}</div>
+          <div><label>{{ form.cond_anemia.label }}</label>{{ form.cond_anemia }}</div>
+          <div><label>{{ form.cond_tonsils.label }}</label>{{ form.cond_tonsils }}</div>
+          <div><label>{{ form.cond_seizures.label }}</label>{{ form.cond_seizures }}</div>
+          <div><label>{{ form.cond_hearing.label }}</label>{{ form.cond_hearing }}</div>
+          <div><label>{{ form.cond_allergy.label }}</label>{{ form.cond_allergy }}</div>
+          <div><label>{{ form.cond_rheumatism.label }}</label>{{ form.cond_rheumatism }}</div>
+          <div><label>{{ form.cond_disability.label }}</label>{{ form.cond_disability }}</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h4 class="s-title">المعلومات عن السلك العسكري</h4>
+        <div class="grid g-3">
+          <div><label>{{ form.father_in_military.label }}</label>{{ form.father_in_military }}</div>
+          <div><label>{{ form.father_served_southern.label }}</label>{{ form.father_served_southern }}</div>
+          <div><label>{{ form.father_is_martyr_south.label }}</label>{{ form.father_is_martyr_south }}</div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h4 class="s-title">ملاحظات وتوصيات</h4>
+        <div class="grid g-2">
+          <div><label>{{ form.student_behavior.label }}</label>{{ form.student_behavior }}</div>
+          <div><label>{{ form.previous_interventions.label }}</label>{{ form.previous_interventions }}</div>
+          <div style="grid-column:1/-1"><label>{{ form.recommendations.label }}</label>{{ form.recommendations }}</div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <div class="hint">سيتم حفظ البيانات وربطها بملف الطالب لعرضها داخل صفحة «ملف الطالب».</div>
+        <div class="actions">
+          <a class="btn" href="{% url 'referrals:detail' r.pk %}">إغلاق</a>
+          <button type="submit" name="save_and_append" value="1" class="btn btn-primary">حفظ وإضافة للسجل</button>
+        </div>
+      </div>
+
+    </form>
   </div>
 </div>
-{% endblock %}
+</body>
+</html>
