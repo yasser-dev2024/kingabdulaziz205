@@ -1,4 +1,3 @@
-# referrals/views.py
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.contrib.auth.models import User
@@ -39,17 +38,12 @@ def _ctx(form=None, errors=None):
     return {"form": form or {}, "errors": errors or {}, "grades": Referral.GRADE_CHOICES, "types": Referral.TYPE_CHOICES}
 
 def _is_manager(user):
-    """
-    مدير المدرسة يمتلك صلاحيات كاملة.
-    التعريف: user.is_staff أو دوره في الملف الشخصي "مدير المدرسة".
-    """
     try:
         return bool(user.is_staff or (getattr(user, "profile", None) and user.profile.role == "مدير المدرسة"))
     except Profile.DoesNotExist:
         return bool(user.is_staff)
 
 def _can_view(user, ref: Referral):
-    # المدير أو المشرف يرى كل شيء، وإلا منشئ الإحالة أو المكلّف بها
     return _is_manager(user) or user == ref.created_by or (ref.assignee and user == ref.assignee)
 
 def _is_counselor(user):
@@ -59,7 +53,6 @@ def _is_counselor(user):
         return False
 
 def _can_assign(user, ref: Referral):
-    # السماح للمدير/المشرف بالإضافة لمنشئ الإحالة والموجّه والمكلّف الحالي
     return (_is_manager(user) or user.is_staff or user == ref.created_by or _is_counselor(user) or (ref.assignee_id == user.id))
 
 def _ensure_student_key(ref: Referral):
@@ -92,7 +85,6 @@ def _get_label(obj, field):
         return field
 
 def _get_value(obj, field):
-    # يدعم حقول choices عبر get_FOO_display
     disp = None
     try:
         disp = getattr(obj, f"get_{field}_display")()
@@ -103,15 +95,13 @@ def _get_value(obj, field):
 
 def _mk_pair(obj, field):
     val = _get_value(obj, field)
-    if val in (None, "", False):  # نتجاهل الفارغ و False
+    if val in (None, "", False):
         return None
     return (_get_label(obj, field), _display(val))
 
 def _counselor_summary_struct(intake):
-    """يُرجع List من أقسام: كل قسم dict فيه title و items [(label, value)]."""
     if not intake:
         return []
-
     sec_social = [
         _mk_pair(intake, "father_alive"),
         _mk_pair(intake, "mother_alive"),
@@ -121,7 +111,6 @@ def _counselor_summary_struct(intake):
         _mk_pair(intake, "father_education"),
         _mk_pair(intake, "mother_education"),
     ]
-
     sec_economic = [
         _mk_pair(intake, "father_job"),
         _mk_pair(intake, "mother_job"),
@@ -132,7 +121,6 @@ def _counselor_summary_struct(intake):
         _mk_pair(intake, "house_type_other"),
         _mk_pair(intake, "gets_everything_easily"),
     ]
-
     sec_health_major = [
         _mk_pair(intake, "disease_heart"),
         _mk_pair(intake, "disease_pressure"),
@@ -152,24 +140,20 @@ def _counselor_summary_struct(intake):
         _mk_pair(intake, "cond_rheumatism"),
         _mk_pair(intake, "cond_disability"),
     ]
-
     sec_military = [
         _mk_pair(intake, "father_in_military"),
         _mk_pair(intake, "father_served_southern"),
         _mk_pair(intake, "father_is_martyr_south"),
     ]
-
     sec_notes = [
         _mk_pair(intake, "student_behavior"),
         _mk_pair(intake, "previous_interventions"),
         _mk_pair(intake, "recommendations"),
         _mk_pair(intake, "follow_up_date"),
     ]
-
     def pack(title, items):
         items = [x for x in items if x]
         return {"title": title, "items": items} if items else None
-
     groups = [
         pack("المعلومات الاجتماعية/التعليمية", sec_social),
         pack("المعلومات الاقتصادية", sec_economic),
@@ -184,7 +168,6 @@ def _counselor_summary_struct(intake):
 def list_referrals(request: HttpRequest):
     scope = request.GET.get("scope", "all")
 
-    # المدير يشاهد كل الإحالات
     if _is_manager(request.user):
         sent_qs = Referral.objects.all()
         inbox_qs = Referral.objects.all()
@@ -204,6 +187,7 @@ def list_referrals(request: HttpRequest):
     items_qs = items_qs.select_related("created_by", "assignee").order_by("-created_at")
     items = list(items_qs)
     for r in items: _ensure_student_key(r)
+
     groups_map = {}
     for r in items:
         key = getattr(r, "student_key", "") or f"ref-{r.pk}"
@@ -215,6 +199,7 @@ def list_referrals(request: HttpRequest):
         if r.created_at > g["latest"]: g["latest"] = r.created_at
         if r.created_at >= g["latest"]: g["student_name"] = r.student_name
     groups = sorted(groups_map.values(), key=lambda x: x["latest"], reverse=True)
+
     counts = {
         "all": base_qs.count(),
         "sent": sent_qs.count(),
@@ -300,11 +285,15 @@ def detail_referral(request, pk: int):
         return HttpResponseForbidden("لا تملك صلاحية عرض هذه الإحالة.")
     _ensure_student_key(ref)
 
+    # عند فتح الإحالة من المكلّف تُعتبر مفتوحة (لأجل الوسم الأخضر بعد الرد)
+    if ref.assignee_id == request.user.id and not ref.is_opened_by_assignee:
+        ref.is_opened_by_assignee = True
+        ref.save(update_fields=["is_opened_by_assignee"])
+
     assignable = User.objects.filter(is_active=True).exclude(id=request.user.id).order_by("username")
     actions = (Action.objects.filter(referral=ref).select_related("author").prefetch_related("files").order_by("created_at"))
     is_counselor = _is_counselor(request.user)
 
-    # المدير يرى كذلك "نفس الطالب" دون تقييد بمنشئ/مكلّف
     base_same_qs = Referral.objects.exclude(pk=ref.pk).order_by("-created_at")
     if _is_manager(request.user):
         same_student_qs = base_same_qs
@@ -327,7 +316,6 @@ def detail_referral(request, pk: int):
             intake = getattr(ref, "counselor_intake", None)
         except Exception:
             intake = None
-        # كل من يملك صلاحية عرض الإحالة يرى الملخص (بما فيهم المدير)
         can_view_counselor_summary = _can_view(request.user, ref)
         if intake and can_view_counselor_summary:
             counselor_summary = _counselor_summary_struct(intake)
@@ -402,9 +390,12 @@ def reply_referral(request, pk: int):
     for f in checked:
         ActionAttachment.objects.create(action=act, file=f, uploaded_by=request.user)
 
+    # وسم الرد ليتحول لون البطاقة للأخضر بعد الفتح
+    if not ref.has_reply:
+        ref.has_reply = True
     if ref.status == "NEW":
         ref.status = "UNDER_REVIEW"
-        ref.save()
+    ref.save(update_fields=["has_reply", "status"])
 
     messages.success(request, "تم إرسال الرد.")
     return redirect("referrals:detail", pk=ref.pk)
@@ -416,9 +407,21 @@ def close_referral(request, pk: int):
     ref = get_object_or_404(Referral, pk=pk)
     if not _can_view(request.user, ref):
         return HttpResponseForbidden("لا تملك صلاحية إغلاق هذه الإحالة.")
-    if not Action.objects.filter(referral=ref).exists():
-        messages.error(request, "لا يمكن إغلاق الإحالة قبل اتخاذ إجراء (رد/ملاحظة/تحويل).")
+
+    # يمنع الإغلاق قبل وجود "رد" أو توصية في نموذج الموجه (إن وُجد)
+    has_valid = Action.objects.filter(referral=ref, kind="REPLY").exists()
+    if not has_valid and HAS_COUNSELOR:
+        try:
+            intake = getattr(ref, "counselor_intake", None)
+            if intake and getattr(intake, "recommendations", "").strip():
+                has_valid = True
+        except Exception:
+            pass
+
+    if not has_valid:
+        messages.error(request, "لا يمكن إغلاق الإحالة قبل وضع رد أو توصية.")
         return redirect("referrals:detail", pk=ref.pk)
+
     ref.status = "CLOSED"
     ref.save()
     Action.objects.create(referral=ref, author=request.user, kind="DECISION", content="تم إغلاق الإحالة.")
@@ -453,153 +456,23 @@ def counselor_intake_view(request, pk: int):
 
     context = {"r": ref, "form": form}
 
-    # 1) قالب إن وُجد
     try:
         tmpl = loader.get_template("referrals/counselor_form.html")
         return HttpResponse(tmpl.render(context, request))
     except TemplateDoesNotExist:
         pass
 
-    # 2) Fallback Inline — لا يعتمد على أي ملف (كامل)
-    inline_tmpl = engines["django"].from_string("""
-<!doctype html><html lang="ar" dir="rtl"><head>
+    inline_tmpl = engines["django"].from_string("""<!doctype html><html lang="ar" dir="rtl"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>نموذج بيانات الموجّه</title>
-<style>
-  body{font-family:system-ui,Segoe UI,Roboto,Arial;background:#f6f7fb;margin:0}
-  .container{max-width:1100px;margin:28px auto;padding:0 12px}
-  .card{background:#fff;border-radius:18px;box-shadow:0 10px 28px rgba(2,6,23,.07);overflow:hidden}
-  .header{display:flex;justify-content:space-between;align-items:center;padding:16px 18px;background:linear-gradient(90deg,#06b6d4,#6366f1);color:#fff}
-  .section{padding:16px 18px}
-  .grid{display:grid;gap:12px}
-  .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
-  @media(max-width:900px){.grid-2,.grid-3{grid-template-columns:1fr}}
-  .h6{margin:0 0 8px 0;font-size:15px;color:#0f172a}
-  .box{border:1px solid #e5e7eb;border-radius:12px;padding:12px;background:#fafafa}
-  label{display:block;margin-bottom:6px;font-weight:600;color:#334155;font-size:14px}
-  input[type="text"],input[type="date"],select,textarea{width:100%;padding:10px 12px;border:1px solid #e5e7eb;border-radius:10px;background:#fff}
-  textarea{min-height:90px}
-  .actions{display:flex;gap:10px;margin-top:12px}
-  .btn{padding:10px 14px;border-radius:10px;border:0;cursor:pointer}
-  .btn-primary{background:#2563eb;color:#fff}
-  .btn-light{background:#eef2ff;color:#1f2937;text-decoration:none}
-  .badge{background:#eef2ff;color:#1f2937;border-radius:9999px;padding:6px 10px;font-size:12px}
-  .hr{height:1px;background:#e5e7eb;margin:10px 0}
-</style></head><body>
-<div class="container"><div class="card">
-  <div class="header">
-    <div style="display:flex;align-items:center;gap:8px">
-      <span class="badge">إحالة #{{ r.pk }}</span>
-      <strong>نموذج بيانات الموجّه</strong>
-    </div>
-    <a href="{% url 'referrals:detail' r.pk %}" class="btn btn-light">عودة للتفاصيل</a>
-  </div>
-
-  <form method="post" novalidate>
-  {% csrf_token %}
-
-  <div class="section">
-    <div class="grid grid-3">
-      <div><label>اسم الموجّه</label>{{ form.counselor_name }}</div>
-      <div><label>تاريخ المتابعة</label>{{ form.follow_up_date }}</div>
-      <div></div>
-    </div>
-  </div>
-
-  <div class="section box">
-    <h4 class="h6">المعلومات الاجتماعية/التعليمية</h4>
-    <div class="grid grid-3">
-      <div><label>{{ form.father_alive.label }}</label>{{ form.father_alive }}</div>
-      <div><label>{{ form.mother_alive.label }}</label>{{ form.mother_alive }}</div>
-      <div><label>{{ form.parents_status.label }}</label>{{ form.parents_status }}</div>
-
-      <div><label>{{ form.siblings_count.label }}</label>{{ form.siblings_count }}</div>
-      <div><label>{{ form.birth_order.label }}</label>{{ form.birth_order }}</div>
-      <div></div>
-
-      <div><label>{{ form.father_education.label }}</label>{{ form.father_education }}</div>
-      <div><label>{{ form.mother_education.label }}</label>{{ form.mother_education }}</div>
-      <div></div>
-    </div>
-  </div>
-
-  <div class="section box">
-    <h4 class="h6">المعلومات الاقتصادية</h4>
-    <div class="grid grid-3">
-      <div><label>{{ form.father_job.label }}</label>{{ form.father_job }}</div>
-      <div><label>{{ form.mother_job.label }}</label>{{ form.mother_job }}</div>
-      <div><label>{{ form.family_income.label }}</label>{{ form.family_income }}</div>
-
-      <div><label>{{ form.receives_social_support.label }}</label>{{ form.receives_social_support }}</div>
-      <div><label>{{ form.house_ownership.label }}</label>{{ form.house_ownership }}</div>
-      <div><label>{{ form.gets_everything_easily.label }}</label>{{ form.gets_everything_easily }}</div>
-
-      <div><label>{{ form.house_type.label }}</label>{{ form.house_type }}</div>
-      <div><label>{{ form.house_type_other.label }}</label>{{ form.house_type_other }}</div>
-      <div></div>
-    </div>
-  </div>
-
-  <div class="section box">
-    <h4 class="h6">المعلومات الصحية</h4>
-    <div class="grid grid-3">
-      <div><label>{{ form.disease_heart.label }}</label>{{ form.disease_heart }}</div>
-      <div><label>{{ form.disease_pressure.label }}</label>{{ form.disease_pressure }}</div>
-      <div><label>{{ form.disease_kidney.label }}</label>{{ form.disease_kidney }}</div>
-      <div><label>{{ form.disease_sleep.label }}</label>{{ form.disease_sleep }}</div>
-      <div><label>{{ form.disease_vision.label }}</label>{{ form.disease_vision }}</div>
-      <div><label>{{ form.disease_other.label }}</label>{{ form.disease_other }}</div>
-    </div>
-    <div class="hr"></div>
-    <div class="grid grid-3">
-      <div><label>{{ form.cond_asthma.label }}</label>{{ form.cond_asthma }}</div>
-      <div><label>{{ form.cond_diabetes.label }}</label>{{ form.cond_diabetes }}</div>
-      <div><label>{{ form.cond_anemia.label }}</label>{{ form.cond_anemia }}</div>
-      <div><label>{{ form.cond_tonsils.label }}</label>{{ form.cond_tonsils }}</div>
-      <div><label>{{ form.cond_seizures.label }}</label>{{ form.cond_seizures }}</div>
-      <div><label>{{ form.cond_hearing.label }}</label>{{ form.cond_hearing }}</div>
-      <div><label>{{ form.cond_allergy.label }}</label>{{ form.cond_allergy }}</div>
-      <div><label>{{ form.cond_rheumatism.label }}</label>{{ form.cond_rheumatism }}</div>
-      <div><label>{{ form.cond_disability.label }}</label>{{ form.cond_disability }}</div>
-    </div>
-  </div>
-
-  <div class="section box">
-    <h4 class="h6">المعلومات عن السلك العسكري</h4>
-    <div class="grid grid-3">
-      <div><label>{{ form.father_in_military.label }}</label>{{ form.father_in_military }}</div>
-      <div><label>{{ form.father_served_southern.label }}</label>{{ form.father_served_southern }}</div>
-      <div><label>{{ form.father_is_martyr_south.label }}</label>{{ form.father_is_martyr_south }}</div>
-    </div>
-  </div>
-
-  <div class="section box">
-    <h4 class="h6">ملاحظات وتوصيات</h4>
-    <div class="grid grid-2">
-      <div><label>{{ form.student_behavior.label }}</label>{{ form.student_behavior }}</div>
-      <div><label>{{ form.previous_interventions.label }}</label>{{ form.previous_interventions }}</div>
-      <div style="grid-column:1/-1"><label>{{ form.recommendations.label }}</label>{{ form.recommendations }}</div>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="actions">
-      <a href="{% url 'referrals:detail' r.pk %}" class="btn btn-light">إلغاء</a>
-      <button type="submit" class="btn btn-primary">حفظ</button>
-    </div>
-  </div>
-
-  </form>
-</div></div>
-</body></html>
-    """)
+</head><body>
+<form method="post">{% csrf_token %}{{ form.as_p }}<button type="submit">حفظ</button></form>
+</body></html>""")
     return HttpResponse(inline_tmpl.render(context, request))
 
 # ——— ملف الطالب ———
 @login_required
 def student_file(request, key: str):
-    # المدير يرى جميع الإحالات للطالب
     if _is_manager(request.user):
         visible_qs = Referral.objects.all().order_by("-created_at")
     else:
@@ -610,7 +483,6 @@ def student_file(request, key: str):
     items = [r for r in visible if getattr(r, "student_key", "") == key]
     student_name = items[0].student_name if items else ""
 
-    # ملخص لكل إحالة فيها Intake
     intake_map = {}
     if HAS_COUNSELOR:
         for r in items:
@@ -621,7 +493,6 @@ def student_file(request, key: str):
             except Exception:
                 pass
 
-    # أيضًا نجهّز خاصية مباشرة لكل r لسهولة الإدراج في القوالب
     if HAS_COUNSELOR:
         for r in items:
             try:

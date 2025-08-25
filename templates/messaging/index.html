@@ -2,119 +2,56 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>مراسلاتي</title>
-  <style>
-    :root{
-      --brand:#1f3c88; --brand2:#06b6d4; --accent:#ffb703;
-      --txt:#0f172a; --muted:#64748b; --line:#e5e7eb;
-      --bg:#f6f9ff; --card:#ffffff; --shadow:0 14px 32px rgba(2,6,23,.08);
-      --r:18px;
-    }
-    body{
-      margin:0; color:var(--txt);
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Tajawal,Arial;
-      background:
-        radial-gradient(1200px 580px at 90% -10%, rgba(99,102,241,.09), transparent 60%),
-        radial-gradient(1000px 650px at -10% 110%, rgba(45,212,191,.12), transparent 60%),
-        linear-gradient(180deg,#fff, var(--bg));
-      min-height:100dvh;
-      cursor:url("{% static 'maus.png' %}") 12 12, auto;
-    }
-    .wrap{max-width:1100px; margin:auto; padding:22px 16px}
-    .head{display:flex; align-items:center; justify-content:space-between; gap:12px; margin:12px 0 16px}
-    .title{margin:0; font-size:clamp(20px,3vw,28px); letter-spacing:.2px}
-    .btn{appearance:none; border:1px solid var(--line); background:#fff; color:var(--txt);
-         border-radius:14px; padding:10px 14px; font-weight:800; text-decoration:none; display:inline-flex; gap:8px; align-items:center; transition:.15s}
-    .btn:hover{transform:translateY(-1px); background:#f8fafc}
-    .btn-primary{color:#fff; background:linear-gradient(100deg,#4f46e5 0%, #06b6d4 100%); border-color:transparent; box-shadow:0 10px 22px rgba(6,182,212,.18)}
-    .muted{color:var(--muted)}
-
-    .grid{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px}
-    @media (max-width:800px){ .grid{grid-template-columns:1fr} }
-
-    .card{
-      position:relative; background:var(--card); border:1px solid var(--line);
-      border-radius:var(--r); padding:14px; box-shadow:var(--shadow); overflow:hidden; isolation:isolate;
-    }
-    .card::after{
-      content:""; position:absolute; inset:-25% -25% auto auto; width:180px; height:180px; border-radius:50%;
-      background:conic-gradient(from 90deg, #06b6d4, #93c5fd); filter:blur(30px); opacity:.22; z-index:-1;
-    }
-
-    .row{display:flex; gap:12px; align-items:flex-start}
-    .avatar{
-      width:46px; height:46px; border-radius:14px; display:grid; place-items:center;
-      background:linear-gradient(135deg,#60a5fa,#c7d2fe); color:#0b1220; font-weight:900; box-shadow:0 10px 20px rgba(37,99,235,.18)
-    }
-    .subject{margin:0; font-size:18px; display:flex; align-items:center; gap:10px; flex-wrap:wrap}
-    .meta{flex:1 1 auto}
-    .kvs{margin-top:6px; font-size:13px; color:var(--muted); display:flex; gap:12px; flex-wrap:wrap}
-    .actions{display:flex; align-items:center; gap:10px; margin-top:10px}
-    .open{margin-inline-start:auto}
-
-    .chip{padding:5px 10px; border-radius:999px; border:1px solid var(--line);
-          background:#f1f5f9; font-size:12px; font-weight:900}
-    .chip-open{background:#dcfce7; color:#065f46; border-color:transparent}
-    .chip-closed{background:#fee2e2; color:#991b1b; border-color:transparent}
-    .chip-out{background:#e0f2fe; color:#075985; border-color:transparent}
-    .chip-in{background:#ede9fe; color:#5b21b6; border-color:transparent}
-    .btn-ghost{background:#fff}
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>المراسلات</title>
+<style>
+  body{margin:0;font-family:system-ui,Tajawal,Arial;background:#f6f8fb;color:#0f172a}
+  .wrap{max-width:1100px;margin:auto;padding:20px 14px}
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 16px}
+  .tab{padding:8px 12px;border-radius:999px;border:1px solid #e5e7eb;background:#fff;font-weight:800;text-decoration:none;color:#111827}
+  .tab.active{background:linear-gradient(90deg,#06b6d4,#4f46e5);color:#fff;border-color:transparent}
+  .list{display:grid;gap:10px}
+  .item{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px;border:1px solid #eef2f7;border-radius:12px;background:#fff}
+  .meta{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .badge{padding:4px 8px;border-radius:999px;font-size:12px;font-weight:900}
+  .b-new{background:#fee2e2;color:#991b1b;border:1px solid #fecaca}
+  .chip{padding:6px 10px;border-radius:999px;background:#f1f5f9;border:1px solid #e5e7eb}
+  .link{font-weight:900;color:#1d4ed8;text-decoration:none}
+</style>
 </head>
 <body>
-  {% include 'header.html' %}
+{% include 'header.html' %}
+<div class="wrap">
 
-  <div class="wrap">
-    <div class="head">
-      <h1 class="title">مراسلاتي</h1>
-      <a class="btn btn-primary" href="{% url 'messaging:new' %}">إنشاء مراسلة</a>
-    </div>
-
-    {% if items %}
-      <div class="grid">
-        {% for t in items %}
-          <div class="card">
-            <div class="row">
-              <div class="avatar" aria-hidden="true">{{ t.subject|default:"@"|slice:":1" }}</div>
-
-              <div class="meta">
-                <h3 class="subject">
-                  <span>{{ t.subject }}</span>
-                  {% if t.status == "OPEN" %}
-                    <span class="chip chip-open">{{ t.get_status_display }}</span>
-                  {% else %}
-                    <span class="chip chip-closed">{{ t.get_status_display }}</span>
-                  {% endif %}
-                  <span class="chip {% if t.sender_id == request.user.id %}chip-out{% else %}chip-in{% endif %}">
-                    {% if t.sender_id == request.user.id %}مرسلة{% else %}واردة{% endif %}
-                  </span>
-                </h3>
-
-                <div class="kvs">
-                  <span>مرجع: <b>{{ t.reference }}</b></span>
-                  <span>من: <b>{{ t.sender.username }}</b></span>
-                  <span>إلى: <b>{{ t.recipient.username }}</b></span>
-                  <span>بتاريخ: {{ t.created_at|date:"Y-m-d H:i" }}</span>
-                </div>
-
-                <div class="actions">
-                  <span class="muted">آخر تحديث: {{ t.updated_at|date:"Y-m-d H:i" }}</span>
-                  <div class="open">
-                    <a class="btn btn-ghost" href="{% url 'messaging:detail' t.pk %}">فتح ➜</a>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        {% endfor %}
-      </div>
-    {% else %}
-      <div class="card muted">لا توجد مراسلات حتى الآن.</div>
-    {% endif %}
+  <div class="tabs">
+    <a class="tab {% if scope == 'all' %}active{% endif %}" href="{% url 'messaging:inbox' %}?scope=all">الكل ({{ counts.all }})</a>
+    <a class="tab {% if scope == 'sent' %}active{% endif %}" href="{% url 'messaging:inbox' %}?scope=sent">مرسلة ({{ counts.sent }})</a>
+    <a class="tab {% if scope == 'inbox' %}active{% endif %}" href="{% url 'messaging:inbox' %}?scope=inbox">واردة ({{ counts.inbox }})</a>
+    <a class="tab" href="{% url 'messaging:new' %}">+ رسالة جديدة</a>
   </div>
 
-  {% include 'footer.html' %}
+  <div class="list">
+    {% for t in items %}
+      <div class="item {% if t.is_new_incoming %}is-new-card{% endif %}">
+        <div class="meta">
+          {% if t.is_new_incoming %}<span class="badge b-new">جديدة</span>{% endif %}
+          <a class="link" href="{% url 'messaging:detail' t.pk %}">{{ t.reference }}</a>
+          <div class="chip">الموضوع: {{ t.subject }}</div>
+          <div class="chip">من: {{ t.sender.username }}</div>
+          <div class="chip">إلى: {{ t.recipient.username }}</div>
+        </div>
+        <div class="meta">
+          {% if t.last_message %}<span class="chip">آخر رد: {{ t.last_message.created_at|date:"Y/m/d H:i" }}</span>{% endif %}
+          <span class="chip">الحالة: {{ t.get_status_display }}</span>
+        </div>
+      </div>
+    {% empty %}
+      <div>لا توجد مراسلات.</div>
+    {% endfor %}
+  </div>
+
+</div>
+{% include 'footer.html' %}
 </body>
 </html>

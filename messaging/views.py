@@ -8,17 +8,13 @@ from django.http import HttpRequest, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils import timezone
 
-# لا نستخدم django.contrib.messages هنا حتى لا يحصل تعارض اسم مع التطبيق
 from accounts.models import Profile
-
-# موديلات التطبيق (بدون تغيير هيكل/أسماء)
 from .models import Message, MessageAttachment, Thread
 
 
 # ===================== Helpers =====================
 
 def _is_manager(user):
-    """مدير المدرسة = is_staff أو ملفه الشخصي role == 'مدير المدرسة'."""
     try:
         return bool(user.is_staff or (getattr(user, "profile", None) and user.profile.role == "مدير المدرسة"))
     except Profile.DoesNotExist:
@@ -26,21 +22,16 @@ def _is_manager(user):
 
 
 def _can_view_thread(user, thread: Thread) -> bool:
-    """المسموح لهم برؤية المراسلة: المدير، المرسل، المستلم."""
     if _is_manager(user):
         return True
     return (thread.sender_id == user.id) or (thread.recipient_id == user.id)
 
 
 def _can_reply_thread(user, thread: Thread) -> bool:
-    """يستطيع الرد: أي طرف في المحادثة أو المدير."""
     return _can_view_thread(user, thread)
 
 
 def _normalize_files(files):
-    """
-    تحقق مبسّط من الملفات (امتدادات وأحجام معقولة). لا نغيّر إعدادات المشروع.
-    """
     ALLOWED_EXTS = {".pdf", ".png", ".jpg", ".jpeg", ".doc", ".docx"}
     MAX_FILE_SIZE = 10 * 1024 * 1024
     checked = []
@@ -54,8 +45,6 @@ def _normalize_files(files):
         checked.append(f)
     return checked, None
 
-
-# ====== دوال مساعدة لقراءة الحقول بأسماء متعددة (لا نمس القوالب القديمة) ======
 
 def _first_non_empty(*vals, default=""):
     for v in vals:
@@ -75,12 +64,11 @@ def _files_any(request: HttpRequest, *names):
     return files
 
 def _find_user(value: str):
-    """
-    يقبل value كـ id أو username ويعيد مستخدمًا نشطًا أو None.
-    """
     v = (value or "").strip()
     if not v:
         return None
+    if v in {"ALL", "الكل", "*"}:
+        return v
     try:
         return User.objects.get(pk=int(v), is_active=True)
     except Exception:
@@ -95,14 +83,6 @@ def _find_user(value: str):
 
 @login_required
 def inbox(request: HttpRequest):
-    """
-    صندوق المراسلات:
-      - المدير يرى جميع المواضيع (Threads).
-      - غير المدير يرى المواضيع التي هو طرفٌ فيها (مرسل/مستلم).
-    يتم ترتيب القائمة فعليًا حسب أحدث رسالة داخل كل موضوع (حتى تظهر الرسائل الحديثة فورًا).
-    نمرّر read_map وتوابع على الكائن نفسه لتسهيل إبراز العناصر الجديدة باللون الأحمر.
-    """
-    # المواضيع المرئية للمستخدم
     if _is_manager(request.user):
         threads_base = Thread.objects.all().select_related("sender", "recipient")
     else:
@@ -118,7 +98,6 @@ def inbox(request: HttpRequest):
     else:
         threads_scoped = threads_base
 
-    # آخر رسالة لكل موضوع ضمن النطاق المحدد
     last_msg_ids = (
         Message.objects.filter(thread_id__in=threads_scoped.values("id"))
         .values("thread_id")
@@ -130,7 +109,6 @@ def inbox(request: HttpRequest):
         for m in Message.objects.filter(id__in=list(last_msg_ids)).select_related("author", "thread")
     }
 
-    # رتب المواضيع حسب id آخر رسالة (أكثر دقة من updated_at)
     items = list(threads_scoped)
     items.sort(
         key=lambda t: (
@@ -140,23 +118,18 @@ def inbox(request: HttpRequest):
         )
     )
 
-    # نافذة اعتبار "جديد"
     now = timezone.now()
     recent_window = now - timedelta(days=3)
 
-    # خرائط للمقروء/اتجاه الرسالة والجديد + حقن خصائص على الكائن لتعمل مع أي قالب
     read_map = {}
     for t in items:
         lm = last_msgs.get(t.id)
         unread = False
         is_new_incoming = False
         if lm:
-            # غير مقروء = آخر رسالة ليست مني
             unread = (lm.author_id != request.user.id)
-            # جديد وارد = آخر رسالة ليست مني ومؤرخة حديثًا
             is_new_incoming = unread and (lm.created_at >= recent_window)
 
-        # اتجاه بالنسبة للمستخدم
         if t.sender_id == request.user.id:
             d = "out"
         elif _is_manager(request.user):
@@ -164,7 +137,6 @@ def inbox(request: HttpRequest):
         else:
             d = "in"
 
-        # حفظ في الخريطة
         read_map[t.id] = {
             "unread": unread,
             "dir": d,
@@ -174,10 +146,9 @@ def inbox(request: HttpRequest):
             "mark": "●" if is_new_incoming else "",
         }
 
-        # ← كذلك نضيف خصائص على نفس الموضوع حتى تعمل مع أي قالب لا يقرأ read_map
         setattr(t, "last_message", lm)
         setattr(t, "is_unread", unread)
-        setattr(t, "is_new_incoming", is_new_incoming)   # استعملها القالب لتلوين العنصر بالأحمر
+        setattr(t, "is_new_incoming", is_new_incoming)
         setattr(t, "new_mark", "●" if is_new_incoming else "")
         setattr(t, "dir", d)
 
@@ -189,7 +160,7 @@ def inbox(request: HttpRequest):
     }
 
     return render(request, "messaging/index.html", {
-        "items": items,           # قائمة المواضيع مرتبة بالأحدث
+        "items": items,
         "scope": scope,
         "counts": counts,
         "is_manager": _is_manager(request.user),
@@ -199,59 +170,46 @@ def inbox(request: HttpRequest):
 
 @login_required
 def index(request: HttpRequest):
-    """Alias للحفاظ على أي روابط قديمة."""
     return inbox(request)
 
 
 @login_required
 def thread_detail(request: HttpRequest, pk: int):
-    """
-    تفاصيل المراسلة:
-      - يقبل pk لــ Thread مباشرة.
-      - ولو تم تمرير pk لرسالة، نحولها تلقائياً لموضوعها.
-    """
-    # حاول كونه موضوع
     thread = Thread.objects.filter(pk=pk).select_related("sender", "recipient").first()
     if thread is None:
-        # ربما pk لرسالة
         msg = get_object_or_404(Message.objects.select_related("thread"), pk=pk)
         thread = msg.thread
 
     if not _can_view_thread(request.user, thread):
         return HttpResponseForbidden("لا تملك صلاحية عرض هذه المراسلة.")
 
-    msgs = (
+    msgs_qs = (
         Message.objects.filter(thread=thread)
         .select_related("author")
         .order_by("created_at", "id")
     )
+    msgs_list = list(msgs_qs)
 
-    return render(request, "messaging/detail.html", {
-        "t": thread,                    # للحفاظ على اسم المتغير في القالب
-        "thread": thread,               # اسم إضافي صريح
-        "messages": list(msgs),         # جميع الرسائل في هذا الموضوع
+    # حقن بدائل أسماء للتمبليت حتى تظهر الرسائل مهما كان اسم المتغير في القالب
+    setattr(thread, "messages_list", msgs_list)
+    ctx = {
+        "t": thread,
+        "thread": thread,
+        "messages": msgs_list,
+        "msgs": msgs_list,
+        "items": msgs_list,
         "is_manager": _is_manager(request.user),
-    })
+    }
+    return render(request, "messaging/detail.html", ctx)
 
 
 @login_required
 def detail(request: HttpRequest, pk: int):
-    """Alias للحفاظ على أي روابط تستخدم detail."""
     return thread_detail(request, pk)
 
 
 @login_required
 def new_thread(request: HttpRequest):
-    """
-    إنشاء مراسلة جديدة:
-      - يدعم أسماء حقول متعددة في القالب بدون تعديل القوالب:
-        * المستلم: recipient / to_user / to / receiver / target
-        * العنوان: subject / title
-        * النص: content / message / text / body
-        * المرفقات: files / attachments / reply_files
-      - POST: إنشاء Thread + أول Message + مرفقات.
-      - GET: يعرض النموذج مع قائمة المستخدمين النشطين.
-    """
     recipients_qs = (
         User.objects.filter(is_active=True)
         .exclude(id=request.user.id)
@@ -260,7 +218,6 @@ def new_thread(request: HttpRequest):
     )
 
     if request.method == "POST":
-        # التقاط القيم من أسماء متعددة بدون المساس بالقوالب
         recipient_val = _post_any(request, "recipient", "to_user", "to", "receiver", "target")
         subject = _post_any(request, "subject", "title")
         content = _post_any(request, "content", "message", "text", "body")
@@ -289,7 +246,17 @@ def new_thread(request: HttpRequest):
                 "error": err,
             })
 
-        # إنشاء الموضوع والرسالة الأولى
+        if isinstance(recipient, str) and recipient in {"ALL", "الكل", "*"}:
+            targets = list(User.objects.filter(is_active=True).exclude(id=request.user.id))
+            for rcpt in targets:
+                thread = Thread.objects.create(subject=subject, sender=request.user, recipient=rcpt, status="OPEN")
+                msg = Message.objects.create(thread=thread, author=request.user, content=content)
+                for f in checked:
+                    MessageAttachment.objects.create(message=msg, file=f, uploaded_by=request.user)
+                thread.updated_at = timezone.now()
+                thread.save(update_fields=["updated_at"])
+            return redirect("messaging:inbox")
+
         thread = Thread.objects.create(
             subject=subject,
             sender=request.user,
@@ -304,13 +271,11 @@ def new_thread(request: HttpRequest):
         for f in checked:
             MessageAttachment.objects.create(message=msg, file=f, uploaded_by=request.user)
 
-        # تحديث المؤشر الزمني للترتيب
         thread.updated_at = timezone.now()
         thread.save(update_fields=["updated_at"])
 
         return redirect("messaging:detail", pk=thread.pk)
 
-    # GET
     ctx = {
         "users": recipients_qs,
         "recipients": recipients_qs,
@@ -322,14 +287,8 @@ def new_thread(request: HttpRequest):
 
 @login_required
 def reply_thread(request: HttpRequest, pk: int):
-    """
-    الرد على موضوع موجود:
-      - يدعم أسماء حقول متعددة للنص/الملفات بدون المساس بالقوالب.
-      - يقبل pk موضوع مباشرة أو pk رسالة (ويحوّل للموضوع).
-    """
     thread = Thread.objects.filter(pk=pk).first()
     if thread is None:
-        # ربما pk لرسالة
         msg = get_object_or_404(Message.objects.select_related("thread"), pk=pk)
         thread = msg.thread
 
@@ -361,9 +320,6 @@ def reply_thread(request: HttpRequest, pk: int):
 
 @login_required
 def close_thread(request: HttpRequest, pk: int):
-    """
-    إغلاق موضوع (تغيير الحالة فقط).
-    """
     thread = get_object_or_404(Thread, pk=pk)
     if not _can_reply_thread(request.user, thread):
         return HttpResponseForbidden("لا تملك صلاحية إغلاق هذه المراسلة.")

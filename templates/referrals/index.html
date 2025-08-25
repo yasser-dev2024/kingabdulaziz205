@@ -2,182 +2,127 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>إحالاتي</title>
-  <style>
-    :root{
-      --brand:#1f3c88;        /* رئيسي */
-      --mint:#06b6d4;         /* مساعد */
-      --sky:#60a5fa;
-      --txt:#0f172a;          /* نص */
-      --muted:#64748b;        /* ثانوي */
-      --line:#e5e7eb;         /* حدود */
-      --bg:#f7fbff;           /* خلفية ناعمة */
-      --card:#ffffff;         /* بطاقات */
-      --chip:#eef2ff;
-      --shadow:0 14px 34px rgba(2,6,23,.08);
-      --r:18px;
-    }
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>الإحالات</title>
+<style>
+  :root{
+    --line:#e5e7eb; --ink:#0f172a; --muted:#64748b;
+    --gradA:#06b6d4; --gradB:#4f46e5;
+    --okA:#16a34a; --okB:#22c55e;
+    --newA:#ef4444; --newB:#f87171;
+  }
+  body{margin:0;font-family:system-ui,Tajawal,Arial;background:#f6f8fb;color:var(--ink)}
+  .wrap{max-width:1100px;margin:auto;padding:20px 14px}
 
-    /* خلفية لطيفة */
-    body{
-      margin:0; color:var(--txt);
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Tajawal,Arial;
-      background:
-        radial-gradient(1200px 580px at 90% -10%, rgba(99,102,241,.09), transparent 60%),
-        radial-gradient(1000px 650px at -10% 110%, rgba(45,212,191,.12), transparent 60%),
-        linear-gradient(180deg,#fff, var(--bg));
-      min-height:100dvh;
-    }
-    .wrap{max-width:1180px; margin:auto; padding:24px 14px}
+  /* Tabs */
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 16px}
+  .tab{padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:#fff;font-weight:800;text-decoration:none;color:#111827}
+  .tab.active{background:linear-gradient(90deg,var(--gradA),var(--gradB));color:#fff;border-color:transparent}
 
-    /* ===== عنوان الصفحة ===== */
-    .page-head{display:flex; align-items:end; justify-content:space-between; gap:12px; flex-wrap:wrap; margin:8px 0 18px}
-    .page-title{margin:0; font-weight:900; letter-spacing:.2px; line-height:1.1;
-      font-size:clamp(22px,3.6vw,34px);
-      background:linear-gradient(90deg,var(--brand),var(--mint));
-      -webkit-background-clip:text; background-clip:text; color:transparent}
-    .page-sub{margin:2px 0 0; color:var(--muted); font-size:14px}
-    .underline{height:4px; background:linear-gradient(90deg,var(--brand),var(--mint),var(--sky)); border-radius:999px; width:120px}
+  /* “ملف الطالب” Folder Card */
+  .folder{
+    position:relative;
+    background:linear-gradient(180deg,#ffffff,#fafbff);
+    border:1px solid var(--line);
+    border-radius:16px;
+    box-shadow:0 10px 28px rgba(2,6,23,.07);
+    overflow:hidden;
+    padding-top:26px;                 /* space for the tab */
+    transition:transform .15s ease, box-shadow .15s ease;
+  }
+  .folder:hover{transform:translateY(-1px); box-shadow:0 16px 36px rgba(2,6,23,.10)}
 
-    /* أزرار وفلاتر */
-    .topbar{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin:6px 0 16px}
-    .btn{appearance:none; border:1px solid var(--line); background:#fff; color:var(--txt);
-         border-radius:14px; padding:10px 14px; font-weight:800; text-decoration:none; display:inline-flex; gap:8px; align-items:center; transition:.15s}
-    .btn:hover{transform:translateY(-1px); background:#f8fafc}
-    .btn-primary{color:#fff; background:linear-gradient(100deg,#4f46e5 0%, var(--mint) 100%); border-color:transparent; box-shadow:0 10px 22px rgba(6,182,212,.18)}
+  .folder-tab{
+    position:absolute; inset:0 auto auto 0;
+    height:28px; width:160px; border-bottom:1px solid var(--line);
+    border-right:1px solid var(--line);
+    border-radius:12px 12px 0 0;
+    background:linear-gradient(90deg,#eef2ff,#f8fafc);
+    display:flex; align-items:center; gap:8px; padding:0 12px; font-weight:900; color:#1f2937;
+  }
+  .folder-tab .dot{width:8px;height:8px;border-radius:999px;background:linear-gradient(90deg,var(--gradA),var(--gradB))}
+  .folder-head{
+    display:flex;justify-content:space-between;align-items:center;gap:10px;
+    padding:10px 14px 8px 14px;
+  }
+  .folder-title{font-size:16px;font-weight:1000}
+  .btn{appearance:none;border:1px solid var(--line);border-radius:10px;background:#fff;color:#111827;padding:8px 12px;font-weight:800;text-decoration:none}
+  .btn:focus{outline:2px solid #93c5fd;outline-offset:2px}
 
-    .tabs{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
-    .tab{padding:8px 12px; border-radius:999px; border:1px solid var(--line); background:#fff; color:var(--txt); text-decoration:none; font-weight:800; display:inline-flex; gap:8px; align-items:center}
-    .badge{min-width:28px; height:22px; border-radius:999px; display:inline-grid; place-items:center; padding:0 8px; font-size:12px; font-weight:900; color:#1f2937; background:#e2e8f0}
-    .tab.is-active{background:linear-gradient(120deg,#e0e7ff,#cffafe); border-color:transparent; box-shadow:0 6px 18px rgba(15,23,42,.08)}
-    .tab.is-active .badge{background:#1f2937; color:#fff}
+  /* Referral items inside folder */
+  .list{display:grid;gap:10px;padding:12px}
+  .item{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:12px;border:1px solid #eef2f7;border-radius:12px;background:#fff
+  }
+  .meta{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+  .badge{padding:4px 8px;border-radius:999px;font-size:12px;font-weight:900}
+  .b-type{background:#eef2ff;color:#1f2937;border:1px solid var(--line)}
+  .b-new{background:linear-gradient(90deg,var(--newA),var(--newB));color:#fff;border:0}
+  .b-read{background:linear-gradient(90deg,var(--okA),var(--okB));color:#fff;border:0}
+  .chip{padding:6px 10px;border-radius:999px;background:#f1f5f9;border:1px solid var(--line)}
+  .ref-link{font-weight:900;color:#1d4ed8;text-decoration:none}
 
-    /* ===== شبكة البطاقات ===== */
-    .grid{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px}
-    @media (max-width:900px){ .grid{grid-template-columns:1fr} }
+  /* Grid of folders */
+  .folders{display:grid;gap:14px}
+  @media(min-width:760px){ .folders{grid-template-columns:repeat(2, minmax(0,1fr))} }
+  @media(min-width:1040px){ .folders{grid-template-columns:repeat(2, minmax(0,1fr))} }
 
-    .card{
-      position:relative; background:var(--card); border:1px solid var(--line);
-      border-radius:var(--r); overflow:hidden; box-shadow:var(--shadow);
-    }
-    /* رأس ملون واضح */
-    .card-header{
-      display:grid; grid-template-columns:auto 1fr auto; gap:10px; align-items:center;
-      padding:12px 14px;
-      background:linear-gradient(90deg,#ffffff 0%, #eef2ff 60%, #e6fffb 100%);
-      border-bottom:1px solid var(--line);
-    }
-    .avatar{
-      width:42px; height:42px; border-radius:12px; display:grid; place-items:center;
-      background:linear-gradient(135deg,#60a5fa,#a5b4fc); color:#0b1220; font-weight:900
-    }
-    .student-name{margin:0; font-size:18px; font-weight:900}
-    .small-note{font-size:12px; color:var(--muted)}
-    .counter{font-weight:900; padding:6px 10px; border-radius:999px; background:#fff; border:1px solid var(--line)}
-
-    .card-body{padding:12px 14px}
-
-    /* صفوف معلومات بعناوين واضحة */
-    .row{display:flex; flex-wrap:wrap; gap:10px}
-    .info{flex:1 1 auto; min-width:180px; border:1px solid var(--line); background:#f8fafc; border-radius:12px; padding:10px 12px}
-    .info h4{margin:0 0 6px; font-size:13px; color:#334155; letter-spacing:.2px}
-    .info .v{font-weight:900}
-
-    /* شارات */
-    .chips{display:flex; gap:8px; flex-wrap:wrap; margin-top:10px}
-    .chip{padding:6px 10px; border-radius:999px; font-size:12px; font-weight:900; border:1px solid var(--line)}
-    .chip-grade{background:#ecfeff; color:#164e63; border-color:transparent}
-    .chip-type{background:#f5f3ff; color:#4c1d95; border-color:transparent}
-    .chip-status{background:#dcfce7; color:#065f46; border-color:transparent}
-    .chip-ref{background:#fff7ed; color:#92400e; border-color:transparent}
-
-    .actions{margin-top:12px; display:flex; justify-content:flex-end}
-    .link{color:#0b5cab; font-weight:900; text-decoration:none; border-bottom:2px solid rgba(11,92,171,.15); padding-bottom:2px}
-    .link:hover{color:#0a4c8f; border-bottom-color:#0a4c8f}
-
-    .empty{padding:18px; text-align:center; color:var(--muted); background:#fff; border:1px dashed var(--line); border-radius:16px}
-  </style>
+  /* Small tweaks */
+  .sep{height:1px;background:#eef2f7;margin:4px 0 0}
+</style>
 </head>
 <body>
-  {% include 'header.html' %}
+{% include 'header.html' %}
+<div class="wrap">
 
-  <div class="wrap">
-    <header class="page-head" aria-label="عنوان الصفحة">
-      <div>
-        <h1 class="page-title">إحالاتي</h1>
-        <div class="underline" aria-hidden="true"></div>
-        <p class="page-sub">عرض موجز لإحالاتك بحسب ملف الطالب مع تفاصيل واضحة</p>
-      </div>
-    </header>
-
-    <div class="topbar">
-      <a class="btn btn-primary" href="{% url 'referrals:new' %}">إنشاء إحالة +</a>
-
-      <nav class="tabs" role="tablist" aria-label="تصفية الإحالات">
-        <a class="tab {% if scope == 'all' %}is-active{% endif %}" href="{% url 'referrals:index' %}?scope=all">
-          الكل <span class="badge">{{ counts.all }}</span>
-        </a>
-        <a class="tab {% if scope == 'sent' %}is-active{% endif %}" href="{% url 'referrals:index' %}?scope=sent">
-          مرسلة <span class="badge">{{ counts.sent }}</span>
-        </a>
-        <a class="tab {% if scope == 'inbox' %}is-active{% endif %}" href="{% url 'referrals:index' %}?scope=inbox">
-          واردة <span class="badge">{{ counts.inbox }}</span>
-        </a>
-      </nav>
-    </div>
-
-    {% if groups %}
-      <section class="grid" aria-label="بطاقات ملفات الطلاب">
-        {% for g in groups %}
-          {% with latest=g.referrals.0 %}
-          <article class="card">
-            <header class="card-header">
-              <div class="avatar" aria-hidden="true">{{ g.student_name|default:"?"|slice:":1" }}</div>
-              <div>
-                <h3 class="student-name">{{ g.student_name }}</h3>
-                <div class="small-note">آخر نشاط: {{ latest.updated_at|date:"Y-m-d H:i" }}</div>
-              </div>
-              <div class="counter" title="إجمالي الإحالات">{{ g.referrals|length }}</div>
-            </header>
-
-            <div class="card-body">
-              <div class="row" aria-label="معلومات أساسية">
-                <div class="info">
-                  <h4>المرجع</h4>
-                  <div class="v">{{ latest.reference }}</div>
-                </div>
-                <div class="info">
-                  <h4>المرسل</h4>
-                  <div class="v">{{ latest.created_by.username }}</div>
-                </div>
-                <div class="info">
-                  <h4>المكلّف</h4>
-                  <div class="v">{{ latest.assignee.username|default:"—" }}</div>
-                </div>
-              </div>
-
-              <div class="chips" aria-label="تصنيف">
-                <span class="chip chip-grade">الصف: {{ latest.get_grade_display }}</span>
-                <span class="chip chip-type">النوع: {{ latest.get_referral_type_display }}</span>
-                <span class="chip chip-status">{{ latest.get_status_display }}</span>
-                <span class="chip chip-ref">أنشئت: {{ latest.created_at|date:"Y-m-d H:i" }}</span>
-              </div>
-
-              <div class="actions">
-                <a class="link" href="{% url 'referrals:detail' latest.pk %}">تفاصيل</a>
-              </div>
-            </div>
-          </article>
-          {% endwith %}
-        {% endfor %}
-      </section>
-    {% else %}
-      <div class="empty">لا توجد إحالات لعرضها.</div>
-    {% endif %}
+  <div class="tabs">
+    <a class="tab {% if scope == 'all' %}active{% endif %}" href="{% url 'referrals:index' %}?scope=all">الكل ({{ counts.all }})</a>
+    <a class="tab {% if scope == 'sent' %}active{% endif %}" href="{% url 'referrals:index' %}?scope=sent">مرسلة ({{ counts.sent }})</a>
+    <a class="tab {% if scope == 'inbox' %}active{% endif %}" href="{% url 'referrals:index' %}?scope=inbox">واردة ({{ counts.inbox }})</a>
+    <a class="tab" href="{% url 'referrals:new' %}">+ إحالة جديدة</a>
   </div>
 
-  {% include 'footer.html' %}
+  <div class="folders">
+    {% for g in groups %}
+      <section class="folder" aria-label="ملف الطالب">
+        <div class="folder-tab"><span class="dot" aria-hidden="true"></span> ملف الطالب</div>
+        <div class="folder-head">
+          <div class="folder-title">{{ g.student_name }}</div>
+          {% if g.key %}
+            <a class="btn" href="{% url 'referrals:student_file' g.key %}">فتح الملف</a>
+          {% endif %}
+        </div>
+        <div class="sep"></div>
+
+        <div class="list">
+          {% for r in g.referrals %}
+            <div class="item">
+              <div class="meta">
+                <a class="ref-link" href="{% url 'referrals:detail' r.pk %}">#{{ r.reference }}</a>
+                <span class="badge b-type">{{ r.get_referral_type_display }}</span>
+                {% if r.is_new_flag %}
+                  <span class="badge b-new">جديدة • لم تُقرأ</span>
+                {% elif r.is_read_flag %}
+                  <span class="badge b-read">مقروءة • تم الرد</span>
+                {% endif %}
+              </div>
+              <div class="meta">
+                <span class="chip">أنشئت: {{ r.created_at|date:"Y/m/d H:i" }}</span>
+                <span class="chip">الحالة: {{ r.get_status_display }}</span>
+                {% if r.assignee %}<span class="chip">المكلّف: {{ r.assignee.username }}</span>{% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      </section>
+    {% empty %}
+      <div style="padding:18px">لا توجد إحالات.</div>
+    {% endfor %}
+  </div>
+
+</div>
+{% include 'footer.html' %}
 </body>
 </html>

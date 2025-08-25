@@ -2,139 +2,49 @@
 <!doctype html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>سجل الطالب</title>
-  <style>
-    :root{
-      --brand:#1f3c88; --brand2:#2ebfa5; --accent:#ffb703;
-      --text:#0f172a; --muted:#64748b; --line:#e5e7eb;
-      --bg0:#ffffff; --bg1:#fbfdff; --bg2:#f7fbff;
-      --surface:#ffffff; --surface2:#f8fafc;
-      --chip:#f1f5f9;
-      --danger:#ef4444; --danger-bg:#fee2e2;
-    }
-    *{box-sizing:border-box}
-    body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial;background:var(--bg2);color:var(--text)}
-    .container{max-width:1200px;margin:24px auto;padding:0 12px}
-    .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
-    .title{font-size:20px;font-weight:700;color:var(--brand)}
-    .sub{font-size:14px;color:var(--muted)}
-    .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;box-shadow:0 10px 28px rgba(2,6,23,.06);overflow:hidden}
-    .section{padding:14px 16px}
-    .divider{height:1px;background:var(--line);margin:8px 0}
-    .badge{display:inline-flex;align-items:center;gap:6px;background:var(--chip);padding:6px 10px;border-radius:999px;font-size:12px;color:#0f172a}
-    .grid{display:grid;gap:12px}
-    .grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
-    .grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
-    @media (max-width:900px){.grid-3{grid-template-columns:1fr}.grid-2{grid-template-columns:1fr}}
-    .pill{display:inline-block;background:#eef2ff;color:#1f2937;border:1px solid #e5e7eb;border-radius:999px;padding:6px 10px;font-size:12px}
-    .k{color:#334155;font-weight:600}
-    .v{color:#0f172a}
-    .group{border:1px solid var(--line);border-radius:14px;background:#fff}
-    .group-h{padding:12px 14px;background:linear-gradient(90deg,#06b6d4,#6366f1);color:#fff;font-weight:700}
-    .row{display:flex;justify-content:space-between;gap:10px;padding:10px 14px;border-top:1px solid var(--line)}
-    .row:first-child{border-top:0}
-    .muted{color:var(--muted)}
-    .ref-list{display:flex;flex-direction:column;gap:10px}
-    .ref-item{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:#fff}
-    .ref-top{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
-    .chips{display:flex;flex-wrap:wrap;gap:6px}
-    .empty{padding:18px;text-align:center;color:var(--muted)}
-    a.btn{display:inline-flex;align-items:center;gap:8px;text-decoration:none;background:#2563eb;color:#fff;padding:10px 14px;border-radius:10px}
-    .btn-light{background:#eef2ff;color:#1f2937}
-
-    /* ——— مستطيل اسم الطالب + تمييز الإحالة الواردة الجديدة ——— */
-    .student-box{padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px}
-    .student-name{font-weight:900;color:#0f172a}
-    .new-banner{display:inline-flex;align-items:center;gap:6px;background:var(--danger);color:#fff;font-weight:900;border-radius:999px;padding:6px 10px}
-    .new-big{margin-top:8px;font-weight:900;color:var(--danger);font-size:15px}
-
-    .pulse-red{
-      border-color:var(--danger);
-      background:linear-gradient(180deg,var(--danger-bg),#fff);
-      box-shadow:0 0 0 0 rgba(239,68,68,.45);
-      animation:pulseRed 1.6s ease-in-out infinite;
-    }
-    @keyframes pulseRed{
-      0%{box-shadow:0 0 0 0 rgba(239,68,68,.45)}
-      70%{box-shadow:0 0 0 12px rgba(239,68,68,0)}
-      100%{box-shadow:0 0 0 0 rgba(239,68,68,0)}
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ملف الطالب</title>
+<style>
+  body{margin:0;font-family:system-ui,Tajawal,Arial;background:#f6f8fb;color:#0f172a}
+  .wrap{max-width:1100px;margin:auto;padding:20px 14px}
+  .card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;box-shadow:0 10px 28px rgba(2,6,23,.07)}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .list{display:grid;gap:10px;padding:12px}
+  .item{padding:12px;border:1px solid #eef2f7;border-radius:12px;display:flex;justify-content:space-between;align-items:center}
+  .badge{padding:6px 10px;border-radius:999px;background:#eef2ff;border:1px solid #e5e7eb;color:#1f2937;font-weight:900}
+  .link{font-weight:900;color:#1d4ed8;text-decoration:none}
+</style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <div>
-        <div class="title">سجل الطالب</div>
-        <div class="sub">{{ student_name }} {% if key %}<span class="pill">المعرّف: {{ key }}</span>{% endif %}</div>
-      </div>
-      <div class="chips">
-        <a class="btn btn-light" href="{% url 'referrals:index' %}">عودة إلى الإحالات</a>
+{% include 'header.html' %}
+<div class="wrap">
+  <div class="card">
+    <div style="padding:12px 16px;background:#fff;border-bottom:1px solid #eef2f7">
+      <div class="row" style="justify-content:space-between;align-items:center">
+        <div style="font-weight:1000">ملف الطالب: {{ student_name }}</div>
+        <a class="link" href="{% url 'referrals:index' %}">العودة للإحالات</a>
       </div>
     </div>
-
-    <div class="card">
-      <div class="section">
-        <div class="badge">عدد الإحالات: {{ items|length }}</div>
-      </div>
-      <div class="divider"></div>
-
-      {% if items %}
-        <div class="section">
-          <div class="ref-list">
-            {% for r in items %}
-              <div class="ref-item">
-                <div class="ref-top">
-                  <div class="chips">
-                    <span class="pill">#{{ r.pk }}</span>
-                    <span class="pill">المرجع: {{ r.reference }}</span>
-                    <span class="pill">النوع: {{ r.get_referral_type_display }}</span>
-                    <span class="pill">الصف: {{ r.get_grade_display }}</span>
-                    <span class="pill">الحالة: {{ r.get_status_display }}</span>
-                    <span class="pill">أُنشئت: {{ r.created_at|date:"Y-m-d H:i" }}</span>
-                  </div>
-                  <a class="btn" href="{% url 'referrals:detail' r.pk %}">تفاصيل الإحالة</a>
-                </div>
-
-                <!-- مستطيل اسم الطالب + شارة "إحالة جديدة" إذا كانت واردة جديدة -->
-                <div class="student-box{% if r.is_new_incoming %} pulse-red{% endif %}">
-                  <div class="student-name">{{ r.student_name }}</div>
-                  {% if r.is_new_incoming %}
-                    <span class="new-banner">إحالة جديدة</span>
-                  {% endif %}
-                </div>
-                {% if r.is_new_incoming %}
-                  <div class="new-big">إحالة جديدة لم تُفتح بعد</div>
-                {% endif %}
-
-                {% if HAS_COUNSELOR %}
-                  {% if r.counselor_summary and r.counselor_summary|length %}
-                    <div class="group" style="margin-top:12px">
-                      <div class="group-h">ملخص بيانات الموجّه</div>
-                      {% for g in r.counselor_summary %}
-                        <div class="row" style="background:#fafafa;font-weight:700">{{ g.title }}</div>
-                        {% for it in g.items %}
-                          <div class="row">
-                            <div class="k">{{ it.0 }}</div>
-                            <div class="v">{{ it.1 }}</div>
-                          </div>
-                        {% endfor %}
-                      {% endfor %}
-                    </div>
-                  {% else %}
-                    <div class="empty">لا توجد بيانات موجّه لهذه الإحالة حتى الآن.</div>
-                  {% endif %}
-                {% endif %}
-              </div>
-            {% endfor %}
+    <div class="list">
+      {% for r in items %}
+        <div class="item">
+          <div class="row">
+            <a class="link" href="{% url 'referrals:detail' r.pk %}">#{{ r.reference }}</a>
+            <span class="badge">{{ r.get_referral_type_display }}</span>
+            {% if r.is_new_flag %}<span class="badge" style="background:#fee2e2;color:#991b1b;border-color:#fecaca">جديدة</span>{% elif r.is_read_flag %}<span class="badge" style="background:#dcfce7;color:#166534;border-color:#bbf7d0">مقروءة</span>{% endif %}
+          </div>
+          <div class="row">
+            <span class="badge">الحالة: {{ r.get_status_display }}</span>
+            <span class="badge">التاريخ: {{ r.created_at|date:"Y/m/d" }}</span>
           </div>
         </div>
-      {% else %}
-        <div class="section empty">لا توجد إحالات مرتبطة بهذا الطالب.</div>
-      {% endif %}
+      {% empty %}
+        <div>لا توجد إحالات لهذا الطالب.</div>
+      {% endfor %}
     </div>
   </div>
+</div>
+{% include 'footer.html' %}
 </body>
 </html>

@@ -1,4 +1,3 @@
-# referrals/models.py
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
@@ -50,6 +49,10 @@ class Referral(models.Model):
     created_by = models.ForeignKey(User, verbose_name="أنشأها", on_delete=models.CASCADE, related_name="created_referrals")
     assignee = models.ForeignKey(User, verbose_name="المكلّف", on_delete=models.SET_NULL, null=True, blank=True, related_name="assigned_referrals")
 
+    # إشارات القراءة والرد
+    is_opened_by_assignee = models.BooleanField("فُتحت من المكلّف", default=False, db_index=True)
+    has_reply = models.BooleanField("يوجد رد", default=False, db_index=True)
+
     created_at = models.DateTimeField("أُنشئت في", auto_now_add=True)
     updated_at = models.DateTimeField("آخر تحديث", auto_now=True)
 
@@ -71,6 +74,18 @@ class Referral(models.Model):
     def referral_id(self):
         return self.pk or "tmp"
 
+    # حالة الوسوم للواجهة
+    @property
+    def is_new_flag(self):
+        # جديدة = لا يوجد رد بعد
+        return not self.has_reply
+
+    @property
+    def is_read_flag(self):
+        # مقروءة = تم فتحها من المكلّف وتم الرد
+        return bool(self.is_opened_by_assignee and self.has_reply)
+
+
 class Attachment(models.Model):
     referral = models.ForeignKey(Referral, verbose_name="الإحالة", on_delete=models.CASCADE, related_name="attachments")
     file = models.FileField("الملف", upload_to=referral_upload_path)
@@ -84,6 +99,7 @@ class Attachment(models.Model):
 
     def __str__(self):
         return f"مرفق {self.referral.reference}"
+
 
 class Action(models.Model):
     KIND_CHOICES = [
@@ -105,6 +121,7 @@ class Action(models.Model):
     def __str__(self):
         return f"{self.get_kind_display()} - {self.referral.reference}"
 
+
 class ActionAttachment(models.Model):
     action = models.ForeignKey(Action, verbose_name="الإجراء", on_delete=models.CASCADE, related_name="files")
     file = models.FileField("الملف", upload_to=action_upload_path)
@@ -118,12 +135,12 @@ class ActionAttachment(models.Model):
 
     @property
     def action_id(self):
-        # إرجاع معرّف الإجراء المرتبط دون تعارض مع اسم الخاصية التلقائي
         a = getattr(self, "action", None)
         return a.pk if a and a.pk else None
 
     def __str__(self):
         return f"مرفق إجراء {self.action_id}"
+
 
 # =========================
 # شريط إخباري قابل للإدارة
