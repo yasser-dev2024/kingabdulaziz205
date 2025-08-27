@@ -24,6 +24,12 @@ SECRET_KEY = os.getenv(
 DEBUG = os.getenv("DJANGO_DEBUG", "1") == "1"
 ALLOWED_HOSTS = ["127.0.0.1", "localhost", ".onrender.com"]
 
+# على Render (خلف Proxy) – يخلي request.is_secure() يشتغل صح
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+
+# لو بتتعامل مع POST من الدومين على Render (لوحة الإدارة/نماذج)
+CSRF_TRUSTED_ORIGINS = ["https://*.onrender.com"]
+
 # =========================
 # تعريف التطبيقات
 # =========================
@@ -52,6 +58,7 @@ INSTALLED_APPS = [
 # =========================
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # ✅ تقديم ملفات static في الإنتاج
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",  # دعم العربية وتعدد اللغات
     "django.middleware.common.CommonMiddleware",
@@ -97,6 +104,7 @@ if os.getenv("USE_POSTGRES", "0") == "1":
             "NAME": os.getenv("DB_NAME"),
             "USER": os.getenv("DB_USER"),
             "PASSWORD": os.getenv("DB_PASSWORD"),
+            "OPTIONS": {"sslmode": "require"},  # ✅ آمن على Render
         }
     }
 else:
@@ -139,11 +147,21 @@ STATIC_URL = "/static/"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "static_collected"
 
+# ✅ Django 5: استخدم STORAGES (Static عبر WhiteNoise + Media عبر Cloudinary)
+STORAGES = {
+    "default": {
+        "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
 # =========================
 # رفع الملفات (Media) عبر Cloudinary
 # =========================
-MEDIA_URL = "/media/"           # يبقى كما هو (غير مستخدم مع التخزين السحابي)
-MEDIA_ROOT = BASE_DIR / "media" # يُستخدم محليًا فقط إذا عطّلت Cloudinary
+MEDIA_URL = "/media/"            # يبقى كما هو (استعمال محلي فقط عند تعطيل Cloudinary)
+MEDIA_ROOT = BASE_DIR / "media"
 
 # Cloudinary config (بيانات من .env)
 import cloudinary
@@ -153,9 +171,6 @@ cloudinary.config(
     api_secret=os.getenv("CLOUDINARY_API_SECRET"),
     secure=True,
 )
-
-# تخزين الميديا على Cloudinary
-DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
 
 # =========================
 # توجيه ما بعد الدخول/الخروج
