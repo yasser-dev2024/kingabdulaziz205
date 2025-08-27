@@ -36,6 +36,10 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
 
+    # Cloudinary (للميديا)
+    "cloudinary",
+    "cloudinary_storage",
+
     # Local apps
     "accounts",
     "referrals",
@@ -136,10 +140,22 @@ STATICFILES_DIRS = [BASE_DIR / "static"]
 STATIC_ROOT = BASE_DIR / "static_collected"
 
 # =========================
-# رفع الملفات (Media)
+# رفع الملفات (Media) عبر Cloudinary
 # =========================
-MEDIA_URL = "/media/"
-MEDIA_ROOT = BASE_DIR / "media"
+MEDIA_URL = "/media/"           # يبقى كما هو (غير مستخدم مع التخزين السحابي)
+MEDIA_ROOT = BASE_DIR / "media" # يُستخدم محليًا فقط إذا عطّلت Cloudinary
+
+# Cloudinary config (بيانات من .env)
+import cloudinary
+cloudinary.config(
+    cloud_name=os.getenv("CLOUDINARY_CLOUD_NAME"),
+    api_key=os.getenv("CLOUDINARY_API_KEY"),
+    api_secret=os.getenv("CLOUDINARY_API_SECRET"),
+    secure=True,
+)
+
+# تخزين الميديا على Cloudinary
+DEFAULT_FILE_STORAGE = "cloudinary_storage.storage.MediaCloudinaryStorage"
 
 # =========================
 # توجيه ما بعد الدخول/الخروج
